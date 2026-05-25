@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Skill Sync — Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f2ea;
+    --paper-warm: #ede6d8;
+    --paper-deep: #e6decb;
+    --ink: #14110d;
+    --ink-soft: #2a251e;
+    --ink-mid: #5a5247;
+    --ink-dim: #8a8170;
+    --ink-faint: #b3a98f;
+    --rule: #d6cdb6;
+    --rule-soft: #e8e0cb;
+    --gold: #9a7a2b;
+    --gold-soft: #c19f49;
+    --red: #b04a2a;
+    --green: #4a6b3a;
+    --serif: "Fraunces", ui-serif, "Iowan Old Style", "Times New Roman", serif;
+    --sans: "Geist", ui-sans-serif, system-ui;
+    --mono: "Geist Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: var(--sans);
+    /* Paper grain via repeating tiny noise gradient */
+    background:
+      radial-gradient(1400px 700px at 12% -8%, rgba(154,122,43,0.06), transparent 60%),
+      radial-gradient(900px 600px at 100% 30%, rgba(176,74,42,0.04), transparent 60%),
+      var(--paper);
+    min-height: 100vh;
+    position: relative;
+  }
+  /* Subtle paper texture */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(rgba(20,17,13,0.045) 1px, transparent 1.5px),
+      radial-gradient(rgba(20,17,13,0.03) 1px, transparent 1.5px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+    mix-blend-mode: multiply;
+    opacity: 0.7;
+  }
+  body > * { position: relative; z-index: 1; }
+
+  /* — Top colophon bar — */
+  .colophon {
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px 36px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-mid);
+  }
+  .colophon .mark {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 16px;
+    letter-spacing: -0.005em; text-transform: none; color: var(--ink);
+  }
+  .colophon .mark .glyph { font-style: normal; font-weight: 600; }
+  .colophon .grow { flex: 1; }
+  .colophon .meta { display: flex; gap: 18px; }
+  .colophon .meta span b { color: var(--ink); font-weight: 500; }
+  .colophon .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: middle; }
+
+  /* — Switcher — */
+  .switch {
+    position: fixed; right: 20px; top: 56px; z-index: 40;
+    display: flex; flex-direction: column; gap: 4px; padding: 10px;
+    border: 1px solid var(--rule); background: rgba(246,242,234,0.92);
+    backdrop-filter: blur(8px); border-radius: 6px;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-mid);
+    box-shadow: 0 18px 40px -20px rgba(20,17,13,0.18);
+  }
+  .switch a { color: var(--ink-mid); text-decoration: none; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em; }
+  .switch a:hover { background: var(--paper-warm); color: var(--ink); }
+  .switch a.cur { color: var(--gold); }
+
+  /* — Shell — */
+  .shell { display: grid; grid-template-columns: 240px 1fr 360px; max-width: 1500px; margin: 0 auto; padding: 28px 36px 80px; gap: 36px; }
+
+  /* — Left ruled tree — */
+  aside.tree { font-size: 13.5px; color: var(--ink-mid); }
+  .tree h6 {
+    margin: 0 0 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-faint); font-weight: 500;
+  }
+  .tree-group { margin-bottom: 22px; border-top: 1px solid var(--rule); padding-top: 10px; }
+  .tree-group:first-of-type { border-top: 0; padding-top: 0; }
+  .tree ul { list-style: none; margin: 0; padding: 0; }
+  .tree li { padding: 5px 0; display: flex; align-items: baseline; gap: 10px; cursor: pointer; }
+  .tree li::before { content: ""; width: 4px; height: 1px; background: var(--ink-faint); flex: none; transform: translateY(-3px); }
+  .tree li:hover { color: var(--ink); }
+  .tree li.cur { color: var(--ink); font-weight: 500; }
+  .tree li.cur::before { background: var(--gold); width: 10px; height: 1px; }
+  .tree .count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .tree li.cur .count { color: var(--gold); }
+
+  /* — Main column — */
+  main { min-width: 0; }
+  .kicker {
+    font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 16px;
+    color: var(--ink-mid); margin-bottom: 8px; letter-spacing: -0.005em;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 400; font-size: 72px; line-height: 0.98;
+    letter-spacing: -0.035em; margin: 0 0 18px;
+    font-variation-settings: "opsz" 120, "SOFT" 30;
+    text-wrap: balance;
+  }
+  h1 em { font-style: italic; font-weight: 300; color: var(--ink-soft); }
+
+  .lede {
+    font-family: var(--serif); font-size: 18.5px; line-height: 1.45;
+    color: var(--ink-soft); max-width: 60ch; letter-spacing: -0.005em;
+    margin-bottom: 28px;
+  }
+  .lede em { font-style: italic; color: var(--gold); }
+
+  /* — Top brass strip — */
+  .brass {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 0;
+    margin-bottom: 36px;
+  }
+  .brass .cell { padding: 0 20px; border-right: 1px solid var(--rule); }
+  .brass .cell:last-child { border-right: 0; }
+  .brass .cell:first-child { padding-left: 0; }
+  .brass .k {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--ink-dim);
+  }
+  .brass .v {
+    font-family: var(--serif); font-weight: 500; font-size: 30px;
+    letter-spacing: -0.02em; line-height: 1; margin-top: 8px;
+    font-feature-settings: "tnum","onum";
+  }
+  .brass .v em { font-style: italic; font-weight: 400; color: var(--ink-mid); font-size: 22px; }
+  .brass .v .gold { color: var(--gold); }
+  .brass .v .red { color: var(--red); font-size: 22px; font-style: italic; font-weight: 400; }
+  .brass .d { font-family: var(--sans); font-size: 12px; color: var(--ink-mid); margin-top: 6px; }
+
+  /* — Toolbar (catalog) — */
+  .catalog-bar {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--ink); padding-bottom: 12px; margin-bottom: 8px;
+  }
+  .catalog-bar h2 {
+    font-family: var(--serif); font-weight: 500; font-size: 22px; letter-spacing: -0.01em; margin: 0;
+  }
+  .catalog-bar h2 em { font-family: var(--mono); font-style: normal; font-size: 12px; color: var(--ink-dim); margin-left: 10px; letter-spacing: 0.06em; }
+  .actions { display: flex; gap: 12px; font-family: var(--mono); font-size: 11px; color: var(--ink-mid); letter-spacing: 0.06em; text-transform: uppercase; }
+  .actions a { color: var(--ink-mid); text-decoration: none; padding: 2px 0; border-bottom: 1px solid transparent; cursor: pointer; }
+  .actions a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  .actions a.cta { color: var(--ink); font-weight: 500; border-bottom: 1px solid var(--gold); }
+
+  /* — Entries — */
+  .entry {
+    display: grid; grid-template-columns: 26px 1fr 220px 90px;
+    align-items: baseline;
+    padding: 22px 0; gap: 24px;
+    border-bottom: 1px solid var(--rule-soft);
+    cursor: pointer;
+  }
+  .entry:hover { background: rgba(154,122,43,0.04); }
+  .entry .no { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-align: right; padding-top: 6px; }
+  .entry .title { font-family: var(--serif); font-weight: 500; font-size: 24px; letter-spacing: -0.018em; line-height: 1.1; }
+  .entry .title em { font-family: var(--serif); font-style: italic; font-weight: 300; color: var(--ink-soft); }
+  .entry .desc { font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.45; color: var(--ink-mid); margin-top: 6px; max-width: 58ch; font-weight: 300; }
+  .entry .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.04em; line-height: 1.7; }
+  .entry .meta b { color: var(--ink); font-weight: 500; }
+  .entry .meta .rule { display: inline-block; width: 1px; height: 10px; background: var(--rule); vertical-align: middle; margin: 0 6px; }
+  .entry .state { text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink-mid); letter-spacing: 0.04em; }
+  .entry .state .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid var(--rule); border-radius: 999px; background: rgba(255,255,255,0.4); }
+  .entry .state .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .entry .state .pill.drift { color: var(--red); border-color: rgba(176,74,42,0.4); }
+  .entry .state .pill.drift .dot { background: var(--red); }
+  .entry .state .pill.unknown { color: var(--gold); border-color: rgba(154,122,43,0.45); }
+  .entry .state .pill.unknown .dot { background: var(--gold); }
+  .entry .state .when { display: block; margin-top: 8px; color: var(--ink-faint); }
+
+  .entry.featured {
+    background: linear-gradient(180deg, rgba(154,122,43,0.06), transparent 80%);
+    border-bottom: 1px solid var(--rule);
+    padding: 28px 0;
+  }
+  .entry.featured .title { font-size: 30px; }
+  .entry.featured .title::after {
+    content: "▮"; font-family: var(--mono); color: var(--gold); margin-left: 12px; font-size: 14px; vertical-align: middle;
+  }
+
+  .pull-quote {
+    margin: 32px 0;
+    padding: 18px 24px;
+    border-left: 2px solid var(--gold);
+    font-family: var(--serif); font-style: italic; font-size: 19px;
+    color: var(--ink-soft); line-height: 1.45;
+    max-width: 60ch;
+  }
+  .pull-quote cite {
+    display: block; margin-top: 8px;
+    font-family: var(--mono); font-style: normal; font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim);
+  }
+
+  /* — Right reading panel — */
+  aside.reader {
+    border-left: 1px solid var(--rule);
+    padding-left: 36px;
+    min-width: 0;
+  }
+  .reader h6 {
+    margin: 0 0 18px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-faint); font-weight: 500;
+    border-bottom: 1px solid var(--rule); padding-bottom: 10px;
+  }
+  .reader .doc {
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    box-shadow: 0 24px 60px -32px rgba(20,17,13,0.25), 0 1px 0 rgba(255,255,255,0.5) inset;
+    padding: 28px 26px 24px;
+    position: relative;
+  }
+  .reader .doc::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold) 30%, transparent 30.1%);
+  }
+  .reader .doc .num {
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-dim); letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .reader .doc h3 {
+    font-family: var(--serif); font-weight: 500; font-size: 32px; letter-spacing: -0.025em;
+    margin: 4px 0 0; line-height: 1.02;
+  }
+  .reader .doc h3 em { font-style: italic; color: var(--ink-soft); }
+  .reader .doc .by { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--ink-mid); margin-top: 6px; }
+  .reader .doc .rule { height: 1px; background: var(--rule); margin: 18px 0; }
+  .reader .doc p {
+    font-family: var(--serif); font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 10px;
+    letter-spacing: -0.005em;
+  }
+  .reader .doc p:first-letter { font-family: var(--serif); font-weight: 500; font-size: 38px; float: left; line-height: 0.85; padding: 6px 8px 0 0; color: var(--gold); }
+
+  .meta-grid {
+    margin-top: 22px;
+    display: grid; grid-template-columns: max-content 1fr;
+    column-gap: 18px; row-gap: 7px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink-mid);
+  }
+  .meta-grid dt { color: var(--ink-faint); letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; padding-top: 2px; }
+  .meta-grid dd { margin: 0; color: var(--ink); }
+  .meta-grid dd .dim { color: var(--ink-dim); }
+  .meta-grid dd code { font-family: var(--mono); background: var(--paper-deep); padding: 1px 5px; border-radius: 3px; color: var(--ink-soft); }
+
+  .target-table {
+    margin-top: 22px; border-top: 1px solid var(--rule);
+  }
+  .target-table .row {
+    display: grid; grid-template-columns: 1fr max-content max-content;
+    align-items: baseline; gap: 12px;
+    padding: 10px 0; border-bottom: 1px dashed var(--rule);
+    font-family: var(--mono); font-size: 11.5px;
+  }
+  .target-table .row .t { font-family: var(--serif); font-size: 14px; color: var(--ink); }
+  .target-table .row .t em { font-style: italic; color: var(--ink-dim); font-size: 12px; }
+  .target-table .row .h { color: var(--ink-faint); }
+  .target-table .row .s { color: var(--green); }
+  .target-table .row .s.drift { color: var(--red); }
+
+  .reader-actions {
+    margin-top: 22px; display: flex; gap: 12px;
+  }
+  .btn {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 9px 14px; border: 1px solid var(--ink); border-radius: 2px; background: transparent; color: var(--ink); cursor: pointer;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn.gold { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn.gold:hover { background: var(--gold); border-color: var(--gold); color: var(--paper); }
+
+  /* — Footer colophon — */
+  .foot {
+    margin-top: 40px; padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-dim);
+    display: flex; justify-content: space-between;
+  }
+  .foot em { font-family: var(--serif); font-style: italic; text-transform: none; letter-spacing: 0; color: var(--ink-mid); }
+
+  /* Staggered reveal */
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .kicker, h1, .lede, .brass, .catalog-bar, .entry, .pull-quote, .reader .doc, .reader h6 { animation: rise 700ms cubic-bezier(.2,.7,.2,1) both; }
+  h1 { animation-delay: 60ms; }
+  .lede { animation-delay: 140ms; }
+  .brass { animation-delay: 200ms; }
+  .catalog-bar { animation-delay: 260ms; }
+  .entry:nth-child(2) { animation-delay: 320ms; }
+  .entry:nth-child(3) { animation-delay: 360ms; }
+  .entry:nth-child(4) { animation-delay: 400ms; }
+  .pull-quote { animation-delay: 440ms; }
+  .entry:nth-child(6) { animation-delay: 480ms; }
+  .entry:nth-child(7) { animation-delay: 520ms; }
+  .entry:nth-child(8) { animation-delay: 560ms; }
+  .reader h6 { animation-delay: 220ms; }
+  .reader .doc { animation-delay: 280ms; }
+
+  /* small marks */
+  .marginalia {
+    margin-top: 24px; font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--ink-mid);
+    border-top: 1px dashed var(--rule); padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="colophon">
+    <div class="mark"><span class="glyph">S§</span> Skill <em>Sync</em></div>
+    <div class="meta">
+      <span><b>~/.claude/skills</b> <span style="color:var(--ink-dim)">→ source of truth</span></span>
+    </div>
+    <div class="grow"></div>
+    <div class="meta">
+      <span><span class="dot"></span>WATCHING · 4 TARGETS</span>
+      <span>VOL. <b>I</b></span>
+      <span>NO. <b>0.1</b></span>
+      <span>MMXXVI</span>
+    </div>
+  </div>
+
+  <nav class="switch">
+    <a href="./console.html">A · CONSOLE</a>
+    <a class="cur" href="./atelier.html">B · ATELIER</a>
+    <a href="./topology.html">C · TOPOLOGY</a>
+  </nav>
+
+  <div class="shell">
+
+    <aside class="tree">
+      <div class="tree-group">
+        <h6>Collections</h6>
+        <ul>
+          <li class="cur">All skills <span class="count">82</span></li>
+          <li>Mine <span class="count">34</span></li>
+          <li>Bundle <span class="count">21</span></li>
+          <li>Built-in <span class="count">24</span></li>
+          <li style="color:var(--red)">Unknown <span class="count" style="color:var(--red)">3</span></li>
+        </ul>
+      </div>
+
+      <div class="tree-group">
+        <h6>By craft</h6>
+        <ul>
+          <li>Engineering <span class="count">19</span></li>
+          <li>Design <span class="count">7</span></li>
+          <li>Writing <span class="count">5</span></li>
+          <li>Workflow <span class="count">14</span></li>
+          <li>A8C / internal <span class="count">11</span></li>
+          <li>Anthropic <span class="count">8</span></li>
+        </ul>
+      </div>
+
+      <div class="tree-group">
+        <h6>Targets</h6>
+        <ul>
+          <li>Claude Code <span class="count">●</span></li>
+          <li>Codex <span class="count">●</span></li>
+          <li>Cursor <span class="count">●</span></li>
+          <li style="color:var(--ink-dim)">Cowork <span class="count" style="color:var(--ink-dim)">∅</span></li>
+        </ul>
+      </div>
+
+      <div class="marginalia">
+        “A library is not made; it is built quietly, season by season.”
+      </div>
+    </aside>
+
+    <main>
+      <div class="kicker">A library of skills, kept</div>
+      <h1>Your collection,<br/><em>quietly</em> in sync.</h1>
+      <p class="lede">
+        Skill Sync watches the place where you actually write your skills — <em>~/.claude/skills</em> — and keeps the same words landing on every assistant that listens. Bundles and built-ins stay untouched. Each overwrite is archived to the trash, never erased.
+      </p>
+
+      <div class="brass">
+        <div class="cell">
+          <div class="k">In the library</div>
+          <div class="v">82</div>
+          <div class="d">skills, all tools combined</div>
+        </div>
+        <div class="cell">
+          <div class="k">Yours, authored</div>
+          <div class="v">34<em>&thinsp;/&thinsp;82</em></div>
+          <div class="d">marked as Mine</div>
+        </div>
+        <div class="cell">
+          <div class="k">Quietly drifting</div>
+          <div class="v"><span class="red">three</span></div>
+          <div class="d">in codex · cursor</div>
+        </div>
+        <div class="cell">
+          <div class="k">Last accord</div>
+          <div class="v" style="font-size:24px">11<em>:</em>42</div>
+          <div class="d">a few minutes ago</div>
+        </div>
+      </div>
+
+      <div class="catalog-bar">
+        <h2>Catalog <em>· sorted by recency</em></h2>
+        <div class="actions">
+          <a>view · grid</a>
+          <a>view · catalog</a>
+          <a>preview diff</a>
+          <a class="cta">sync all →</a>
+        </div>
+      </div>
+
+      <div class="entry featured">
+        <div class="no">001</div>
+        <div>
+          <div class="title">brainstorming <em>— the patient one.</em></div>
+          <div class="desc">Use before any creative work. Explores intent and surfaces a clear shape before a single line is written. Required reading on first contact.</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>14</b> files <span class="rule"></span> <b>12.4</b> kB <span class="rule"></span> superpowers <span class="rule"></span> rev. <b>aa3b1f0</b> <span class="rule"></span> appears in <b>3</b> targets
+          </div>
+        </div>
+        <div class="meta">authored<br/><b>devinwalker</b><br/>edited <b>11:38</b> today</div>
+        <div class="state">
+          <span class="pill"><span class="dot"></span>IN SYNC</span>
+          <span class="when">3 of 4 targets</span>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="no">002</div>
+        <div>
+          <div class="title">writing-skills <em>— the editor.</em></div>
+          <div class="desc">For drafting, revising, and verifying skills before they ship. Notably honest about what makes a skill load-bearing.</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>11</b> files <span class="rule"></span> <b>19.0</b> kB <span class="rule"></span> superpowers
+          </div>
+        </div>
+        <div class="meta">edited <b>11:14</b><br/><span class="dim">codex copy is 1 commit behind</span></div>
+        <div class="state">
+          <span class="pill drift"><span class="dot"></span>DRIFT</span>
+          <span class="when">codex · pull-back?</span>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="no">003</div>
+        <div>
+          <div class="title">test-driven-development <em>— the disciplinarian.</em></div>
+          <div class="desc">Red, green, refactor. Use before writing any implementation. Refuses to be skipped politely.</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>8</b> files <span class="rule"></span> <b>7.9</b> kB <span class="rule"></span> superpowers
+          </div>
+        </div>
+        <div class="meta">edited <b>11:30</b></div>
+        <div class="state">
+          <span class="pill"><span class="dot"></span>IN SYNC</span>
+          <span class="when">4 of 4 targets</span>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="no">004</div>
+        <div>
+          <div class="title">verification-before-completion <em>— the auditor.</em></div>
+          <div class="desc">Evidence before assertions, always. Read the output before claiming the green check.</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>4</b> files <span class="rule"></span> <b>6.8</b> kB <span class="rule"></span> superpowers
+          </div>
+        </div>
+        <div class="meta">edited <b>11:14</b></div>
+        <div class="state">
+          <span class="pill"><span class="dot"></span>IN SYNC</span>
+          <span class="when">4 of 4 targets</span>
+        </div>
+      </div>
+
+      <div class="pull-quote">
+        “Bundles and built-ins are <em>guests</em> in this library — never written, never edited, only read.”
+        <cite>— a safety guarantee</cite>
+      </div>
+
+      <div class="entry">
+        <div class="no">005</div>
+        <div>
+          <div class="title">using-git-worktrees <em>— the cartographer.</em></div>
+          <div class="desc">Isolates feature work in a separate worktree before plans are executed. Keeps the main directory still and uncluttered.</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>3</b> files <span class="rule"></span> <b>4.2</b> kB
+          </div>
+        </div>
+        <div class="meta">edited <b>10:58</b><br/><span class="dim">cursor missing 1 file</span></div>
+        <div class="state">
+          <span class="pill drift"><span class="dot"></span>DRIFT</span>
+          <span class="when">cursor · push?</span>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="no">006</div>
+        <div>
+          <div class="title">jetpack-theme-visual-qa <em>— newly arrived.</em></div>
+          <div class="desc">Appeared in your Codex install two days ago. Not tagged yet — is this yours, or did it come with a bundle?</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>?</b> files <span class="rule"></span> <b>9.2</b> kB <span class="rule"></span> <b>codex only</b>
+          </div>
+        </div>
+        <div class="meta">first seen<br/><b>2 days ago</b></div>
+        <div class="state">
+          <span class="pill unknown"><span class="dot"></span>UNKNOWN</span>
+          <span class="when">classify →</span>
+        </div>
+      </div>
+
+      <div class="entry">
+        <div class="no">007</div>
+        <div>
+          <div class="title">frontend-design <em>— a built-in.</em></div>
+          <div class="desc">From anthropic-skills. Read-only here; the source lives upstream.</div>
+          <div class="meta" style="margin-top:10px;">
+            <b>21</b> files <span class="rule"></span> <b>31.2</b> kB <span class="rule"></span> anthropic-skills
+          </div>
+        </div>
+        <div class="meta">vendored<br/><span class="dim">last bump 1w ago</span></div>
+        <div class="state">
+          <span class="pill"><span class="dot"></span>READ-ONLY</span>
+          <span class="when">via bundle</span>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span>SET IN <em>Fraunces</em> &amp; <em>Geist</em> — TYPESET FOR <em>SKILL SYNC</em></span>
+        <span>LOCAL-FIRST · TAURI · v0.1.0</span>
+        <span>FOLIO <em>iii</em></span>
+      </div>
+    </main>
+
+    <aside class="reader">
+      <h6>Selected · skill detail</h6>
+      <div class="doc">
+        <div class="num">№ 001 · MINE</div>
+        <h3>brainstorming<br/><em>the patient one.</em></h3>
+        <div class="by">authored by <em>devinwalker</em> · rev aa3b1f0</div>
+        <div class="rule"></div>
+        <p>You must use this before any creative work — creating features, building components, adding functionality, or modifying behavior. It explores user intent, requirements, and design before a single component is written.</p>
+        <p style="text-indent: 1em;">Skip it at your peril. The shape of a thing decides whether it will hold.</p>
+
+        <dl class="meta-grid">
+          <dt>path</dt><dd><code>~/.claude/skills/<br/>superpowers/brainstorming</code></dd>
+          <dt>files</dt><dd>14 · <span class="dim">SKILL.md, examples/, references/</span></dd>
+          <dt>size</dt><dd>12.4 kB</dd>
+          <dt>revision</dt><dd><code>aa3b1f0</code> · <span class="dim">11:38 today</span></dd>
+          <dt>archive</dt><dd>17 prior versions in <code>~/.Trash</code></dd>
+        </dl>
+
+        <div class="target-table">
+          <div class="row"><span class="t">Claude Code <em>· ~/.claude</em></span><span class="h">aa3b1f0</span><span class="s">in sync</span></div>
+          <div class="row"><span class="t">Codex <em>· ~/.codex</em></span><span class="h">aa3b1f0</span><span class="s">in sync</span></div>
+          <div class="row"><span class="t">Cursor <em>· ~/.cursor</em></span><span class="h">aa3b1f0</span><span class="s">in sync</span></div>
+          <div class="row"><span class="t">Cowork <em>· .skill zip</em></span><span class="h">—</span><span class="s drift">not built</span></div>
+        </div>
+
+        <div class="reader-actions">
+          <button class="btn">Open in editor</button>
+          <button class="btn gold">Build .skill</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

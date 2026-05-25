@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Skill Sync — Topology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #07090d;
+    --bg-1: #0b0e14;
+    --bg-2: #10141c;
+    --bg-3: #161b25;
+    --paper: #f3ece1;
+    --paper-soft: #e7dfd1;
+    --paper-line: rgba(243,236,225,0.08);
+    --line: rgba(243,236,225,0.10);
+    --line-strong: rgba(243,236,225,0.18);
+    --fg: #e9e3d6;
+    --fg-mid: #a8a297;
+    --fg-dim: #74705e;
+    --fg-faint: #4d4a40;
+    --cyan: #6ad9d2;
+    --cyan-soft: rgba(106,217,210,0.18);
+    --cyan-glow: rgba(106,217,210,0.35);
+    --amber: #e8a44a;
+    --amber-soft: rgba(232,164,74,0.18);
+    --red: #e75a4a;
+    --red-soft: rgba(231,90,74,0.16);
+    --violet: #b78cff;
+    --serif: "Instrument Serif", "Iowan Old Style", "Times New Roman", serif;
+    --mono: "JetBrains Mono", ui-monospace, "Fira Code", Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg-0); color: var(--fg); font-family: var(--mono); font-size: 13px; -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(106,217,210,0.06), transparent 60%),
+      radial-gradient(900px 500px at -5% 90%, rgba(183,140,255,0.04), transparent 60%),
+      var(--bg-0);
+  }
+  /* Blueprint grid */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(243,236,225,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(243,236,225,0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(1400px 800px at 50% 35%, black, transparent 90%);
+  }
+  /* Corner registration marks */
+  body::after {
+    content: ""; position: fixed; inset: 12px; pointer-events: none; z-index: 0;
+    background:
+      linear-gradient(var(--line-strong), var(--line-strong)) 0 0 / 14px 1px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 0 0 / 1px 14px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 100% 0 / 14px 1px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 100% 0 / 1px 14px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 0 100% / 14px 1px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 0 100% / 1px 14px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 100% 100% / 14px 1px no-repeat,
+      linear-gradient(var(--line-strong), var(--line-strong)) 100% 100% / 1px 14px no-repeat;
+  }
+  body > * { position: relative; z-index: 1; }
+
+  /* — Header — */
+  header {
+    display: grid; grid-template-columns: 240px 1fr 360px;
+    align-items: end;
+    padding: 28px 36px 18px;
+    border-bottom: 1px solid var(--line);
+    gap: 28px;
+  }
+  .brand .ttl {
+    font-family: var(--serif); font-size: 34px; line-height: 1; letter-spacing: -0.02em; color: var(--fg);
+  }
+  .brand .ttl em { font-style: italic; color: var(--cyan); }
+  .brand .sub { font-family: var(--mono); font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.16em; text-transform: uppercase; margin-top: 6px; }
+
+  .legend {
+    display: flex; gap: 18px; align-items: center; justify-content: center;
+    font-size: 10.5px; color: var(--fg-mid); letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .legend .item { display: inline-flex; align-items: center; gap: 8px; }
+  .legend .line { width: 30px; height: 2px; border-radius: 1px; }
+  .legend .line.s { background: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
+  .legend .line.d {
+    background-image: repeating-linear-gradient(90deg, var(--amber) 0 6px, transparent 6px 11px);
+    height: 2px;
+  }
+  .legend .line.x {
+    background-image: repeating-linear-gradient(90deg, var(--red) 0 4px, transparent 4px 9px);
+    height: 2px;
+  }
+  .legend .line.m { background: transparent; border-top: 1px dashed var(--fg-faint); height: 0; }
+
+  .status {
+    text-align: right;
+  }
+  .status .ts {
+    font-family: var(--serif); font-style: italic; font-size: 24px; color: var(--fg); letter-spacing: -0.01em; line-height: 1;
+  }
+  .status .ts em { color: var(--cyan); font-style: normal; font-family: var(--mono); font-size: 14px; letter-spacing: 0; margin-left: 6px; }
+  .status .sub { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 6px; }
+
+  /* — Switcher — */
+  .switch {
+    position: fixed; right: 20px; top: 14px; z-index: 40;
+    display: flex; gap: 4px; padding: 6px;
+    border: 1px solid var(--line-strong); background: rgba(11,14,20,0.85);
+    backdrop-filter: blur(8px); border-radius: 999px;
+    font-size: 10.5px; color: var(--fg-mid); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .switch a { color: var(--fg-mid); text-decoration: none; padding: 4px 10px; border-radius: 999px; }
+  .switch a:hover { background: var(--bg-3); color: var(--fg); }
+  .switch a.cur { background: var(--cyan); color: var(--bg-0); }
+
+  /* — Layout — */
+  .grid { display: grid; grid-template-columns: 240px 1fr 360px; min-height: calc(100vh - 110px); }
+
+  /* — Left panel — */
+  aside.left {
+    border-right: 1px solid var(--line);
+    padding: 22px 18px 18px;
+  }
+  .left h6 {
+    margin: 0 0 10px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-dim);
+    font-weight: 500;
+  }
+  .left .group { margin-bottom: 22px; }
+  .left .item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; color: var(--fg-mid); cursor: pointer; }
+  .left .item:hover { color: var(--fg); }
+  .left .item.cur { color: var(--cyan); }
+  .left .item .n { color: var(--fg-faint); font-size: 11px; }
+  .left .item.cur .n { color: var(--cyan); }
+
+  .toggles { display: flex; flex-direction: column; gap: 7px; font-size: 11.5px; }
+  .tog { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg-1); }
+  .tog .l { color: var(--fg-mid); }
+  .tog .l span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); margin-right: 8px; box-shadow: 0 0 6px var(--cyan-glow); vertical-align: middle; }
+  .tog .sw { width: 22px; height: 12px; border-radius: 999px; background: var(--cyan); position: relative; }
+  .tog .sw::after { content: ""; position: absolute; right: 1px; top: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--bg-0); }
+  .tog.off .sw { background: var(--bg-3); }
+  .tog.off .sw::after { left: 1px; right: auto; }
+  .tog.off .l span { background: var(--fg-faint); box-shadow: none; }
+
+  .schematic-box {
+    margin-top: 20px; padding: 12px; border: 1px solid var(--line); border-radius: 4px;
+    font-size: 10.5px; color: var(--fg-dim); line-height: 1.7;
+  }
+  .schematic-box .row { display: flex; justify-content: space-between; }
+  .schematic-box .row b { color: var(--fg); font-weight: 500; }
+
+  .epigraph {
+    margin-top: 24px; padding-top: 18px; border-top: 1px dashed var(--line);
+    font-family: var(--serif); font-style: italic; font-size: 14.5px; line-height: 1.4; color: var(--fg-mid);
+  }
+  .epigraph cite { display: block; margin-top: 6px; font-family: var(--mono); font-style: normal; font-size: 10px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* — Canvas — */
+  .canvas {
+    position: relative;
+    padding: 22px 8px 30px;
+  }
+  .canvas-title {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 0 28px 14px; border-bottom: 1px dashed var(--line);
+    margin-bottom: 14px;
+  }
+  .canvas-title h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 28px; letter-spacing: -0.015em; color: var(--fg); line-height: 1; }
+  .canvas-title h2 em { font-style: italic; color: var(--fg-mid); }
+  .canvas-title .scale { font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.12em; text-transform: uppercase; }
+  .canvas-title .scale b { color: var(--cyan); font-weight: 500; }
+
+  /* lane headers */
+  .lanes {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr 1fr 1fr;
+    gap: 0;
+    padding: 0 28px;
+  }
+  .lane-head {
+    border-bottom: 1px solid var(--line-strong);
+    padding: 10px 14px;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-dim);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .lane-head b { color: var(--fg); font-weight: 500; }
+  .lane-head .tag { font-family: var(--mono); font-size: 9.5px; color: var(--fg-faint); }
+  .lane-head.source { color: var(--cyan); border-bottom-color: var(--cyan-soft); }
+  .lane-head.source b { color: var(--cyan); }
+
+  /* lanes grid for rows */
+  .rows {
+    padding: 6px 28px 18px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: relative;
+  }
+  .row {
+    display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr;
+    align-items: center;
+    padding: 10px 0;
+    position: relative;
+    border-radius: 4px;
+    transition: background 120ms ease;
+  }
+  .row:hover { background: rgba(243,236,225,0.025); }
+  .row.cur { background: linear-gradient(90deg, rgba(106,217,210,0.06), transparent 80%); }
+  .row.cur::before {
+    content: ""; position: absolute; left: -16px; top: 50%; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px var(--cyan-glow);
+    transform: translateY(-50%);
+  }
+
+  /* node cells */
+  .cell { padding: 0 14px; min-height: 38px; display: flex; align-items: center; gap: 10px; position: relative; }
+  .cell.src .node { background: rgba(106,217,210,0.08); border-color: var(--cyan); color: var(--cyan); }
+  .cell.src .node b { color: var(--fg); }
+  .node {
+    display: inline-flex; flex-direction: column; gap: 2px;
+    padding: 7px 12px; min-width: 0; max-width: 100%;
+    background: var(--bg-1);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    font-size: 12px;
+    flex: 1;
+  }
+  .node .name {
+    color: var(--fg);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+  .node .sub { font-size: 9.5px; color: var(--fg-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+  .node.sync { border-color: var(--cyan-soft); }
+  .node.sync .sub { color: var(--cyan); }
+  .node.drift { border-color: var(--amber-soft); background: rgba(232,164,74,0.04); }
+  .node.drift .sub { color: var(--amber); }
+  .node.miss { border-style: dashed; color: var(--fg-faint); }
+  .node.miss .name { color: var(--fg-faint); }
+  .node.miss .sub { color: var(--fg-faint); }
+  .node.ext { border-color: rgba(183,140,255,0.3); }
+  .node.ext .sub { color: var(--violet); }
+
+  /* Connector pipes — drawn as ::before on target cells */
+  .cell.t::before {
+    content: ""; position: absolute; left: -1px; right: 100%; top: 50%; height: 1px;
+    background-image: repeating-linear-gradient(90deg, var(--cyan) 0 5px, transparent 5px 9px);
+    width: 28px; transform: translateY(-50%);
+    opacity: 0.7;
+  }
+  .row.sync .cell.t::before { background: linear-gradient(90deg, transparent, var(--cyan)); opacity: 0.6; height: 1.5px; }
+  .row.drift .cell.t.drift::before { background-image: repeating-linear-gradient(90deg, var(--amber) 0 5px, transparent 5px 9px); opacity: 0.9; }
+  .row.drift .cell.t.sync::before { background: linear-gradient(90deg, transparent, var(--cyan)); opacity: 0.6; height: 1.5px; background-image: none; }
+  .cell.t.miss::before { background-image: repeating-linear-gradient(90deg, var(--fg-faint) 0 3px, transparent 3px 8px); opacity: 0.45; }
+
+  /* flowing-dash animation on sync lines */
+  @keyframes flow { from { background-position: 0 0; } to { background-position: 28px 0; } }
+  .row.sync .cell.t::before, .row.drift .cell.t::before { animation: flow 1.4s linear infinite; background-size: 28px 1px; }
+
+  /* row meta strip */
+  .row-meta {
+    padding: 4px 14px 0;
+    display: flex; gap: 14px;
+    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-dim);
+  }
+  .row-meta .pill {
+    padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px;
+  }
+  .row-meta .pill.cyan { color: var(--cyan); border-color: var(--cyan-soft); }
+  .row-meta .pill.amber { color: var(--amber); border-color: var(--amber-soft); }
+
+  /* footer of canvas */
+  .canvas-foot {
+    margin-top: 18px; padding: 14px 28px 0;
+    border-top: 1px dashed var(--line);
+    display: flex; align-items: center; gap: 14px;
+    font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .canvas-foot .grow { flex: 1; }
+  .btn {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 4px; cursor: pointer; border: 1px solid var(--line-strong);
+    background: transparent; color: var(--fg-mid);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { color: var(--fg); border-color: var(--line-strong); background: var(--bg-2); }
+  .btn.primary {
+    background: var(--cyan); color: var(--bg-0); border-color: var(--cyan); font-weight: 600;
+    box-shadow: 0 0 0 1px var(--cyan-soft), 0 12px 28px -10px var(--cyan-glow);
+  }
+  .btn.primary:hover { background: var(--cyan); filter: brightness(1.08); }
+
+  /* — Right detail rail — */
+  aside.right {
+    border-left: 1px solid var(--line);
+    padding: 22px 22px 22px;
+    font-size: 12.5px;
+  }
+  .right .head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line);
+    font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .right .head b { color: var(--cyan); font-weight: 500; }
+  .right h3 {
+    margin: 18px 0 4px; font-family: var(--serif); font-weight: 400; font-size: 28px; letter-spacing: -0.015em; color: var(--fg); line-height: 1.05;
+  }
+  .right h3 em { font-style: italic; color: var(--fg-mid); }
+  .right .strap { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--fg-mid); }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 0 6px; }
+  .stat-row .s { padding: 10px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg-1); }
+  .stat-row .s .k { font-size: 9.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+  .stat-row .s .v { font-family: var(--serif); font-size: 22px; color: var(--fg); margin-top: 4px; line-height: 1; }
+  .stat-row .s .v em { color: var(--cyan); font-style: italic; }
+
+  .targets-list {
+    margin-top: 16px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .targets-list .t {
+    display: grid; grid-template-columns: 18px 1fr auto auto;
+    align-items: center; gap: 10px;
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--bg-1);
+    font-size: 11.5px;
+  }
+  .targets-list .t .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan-glow); }
+  .targets-list .t.drift .dot { background: var(--amber); box-shadow: 0 0 6px var(--amber-soft); }
+  .targets-list .t.miss .dot { background: var(--fg-faint); box-shadow: none; }
+  .targets-list .t .nm { color: var(--fg); }
+  .targets-list .t .nm em { color: var(--fg-dim); font-style: normal; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 6px; }
+  .targets-list .t .hash { color: var(--fg-dim); font-size: 10.5px; }
+  .targets-list .t .ago { color: var(--fg-dim); font-size: 10.5px; }
+  .targets-list .t.drift .ago { color: var(--amber); }
+
+  .diff-block {
+    margin-top: 18px; padding: 12px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 4px;
+    font-size: 11.5px; line-height: 1.6; color: var(--fg-mid); white-space: pre-wrap; word-break: break-word;
+  }
+  .diff-block .h { color: var(--fg-dim); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; display: block; margin-bottom: 8px; }
+  .diff-block .add { color: var(--cyan); }
+  .diff-block .del { color: var(--red); }
+  .diff-block .meta { color: var(--fg-faint); }
+
+  .archive {
+    margin-top: 18px; padding: 12px; border: 1px dashed var(--line); border-radius: 4px;
+    font-size: 11px; color: var(--fg-mid); line-height: 1.6;
+  }
+  .archive b { color: var(--fg); }
+  .archive a { color: var(--cyan); text-decoration: none; }
+
+  .right-actions { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Staggered reveal */
+  @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  header > *, .lane-head, .row, .right > *, .left .group { animation: rise 620ms cubic-bezier(.2,.7,.2,1) both; }
+  .row:nth-child(1) { animation-delay: 60ms; }
+  .row:nth-child(2) { animation-delay: 110ms; }
+  .row:nth-child(3) { animation-delay: 160ms; }
+  .row:nth-child(4) { animation-delay: 210ms; }
+  .row:nth-child(5) { animation-delay: 260ms; }
+  .row:nth-child(6) { animation-delay: 310ms; }
+  .row:nth-child(7) { animation-delay: 360ms; }
+  .row:nth-child(8) { animation-delay: 410ms; }
+  .row:nth-child(9) { animation-delay: 460ms; }
+  .row:nth-child(10) { animation-delay: 510ms; }
+  .row:nth-child(11) { animation-delay: 560ms; }
+  .row:nth-child(12) { animation-delay: 610ms; }
+
+  /* Small caret blink in title */
+  .caret { display: inline-block; width: 8px; height: 18px; background: var(--cyan); margin-left: 4px; vertical-align: -2px; box-shadow: 0 0 8px var(--cyan-glow); animation: blink 1.05s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Pin/marker on selected row */
+  .pin {
+    position: absolute; left: -2px; top: 50%; transform: translateY(-50%);
+    font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--cyan);
+  }
+</style>
+</head>
+<body>
+
+  <nav class="switch">
+    <a href="./console.html">A · console</a>
+    <a href="./atelier.html">B · atelier</a>
+    <a class="cur" href="./topology.html">C · topology</a>
+  </nav>
+
+  <header>
+    <div class="brand">
+      <div class="ttl">Skill <em>Sync</em><span class="caret"></span></div>
+      <div class="sub">Topology · v0.1.0</div>
+    </div>
+
+    <div class="legend">
+      <span class="item"><span class="line s"></span> in sync</span>
+      <span class="item"><span class="line d"></span> drift</span>
+      <span class="item"><span class="line x"></span> conflict</span>
+      <span class="item"><span class="line m"></span> not installed</span>
+    </div>
+
+    <div class="status">
+      <div class="ts">11:42<em>:08</em></div>
+      <div class="sub">watching · 4 targets · 30s interval</div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- LEFT -->
+    <aside class="left">
+      <div class="group">
+        <h6>View</h6>
+        <div class="item cur">Topology <span class="n">82</span></div>
+        <div class="item">Library <span class="n">82</span></div>
+        <div class="item">Activity <span class="n">214</span></div>
+        <div class="item">Packages <span class="n">3</span></div>
+      </div>
+
+      <div class="group">
+        <h6>Filter</h6>
+        <div class="item cur">All</div>
+        <div class="item">Mine <span class="n">34</span></div>
+        <div class="item">Drift <span class="n">3</span></div>
+        <div class="item">Unknown <span class="n">3</span></div>
+        <div class="item">Read-only <span class="n">45</span></div>
+      </div>
+
+      <div class="group">
+        <h6>Targets</h6>
+        <div class="toggles">
+          <div class="tog"><span class="l"><span></span>Claude Code</span><span class="sw"></span></div>
+          <div class="tog"><span class="l"><span></span>Codex</span><span class="sw"></span></div>
+          <div class="tog"><span class="l"><span></span>Cursor</span><span class="sw"></span></div>
+          <div class="tog off"><span class="l"><span></span>Cowork (zip)</span><span class="sw"></span></div>
+        </div>
+      </div>
+
+      <div class="schematic-box">
+        <div class="row"><span>source</span><b>~/.claude/skills</b></div>
+        <div class="row"><span>archive</span><b>~/.Trash</b></div>
+        <div class="row"><span>scan</span><b>30s</b></div>
+        <div class="row"><span>scope</span><b>~/.{claude,codex,cursor,agents}</b></div>
+      </div>
+
+      <div class="epigraph">
+        “The map made the territory legible.”
+        <cite>plate iii · topology</cite>
+      </div>
+    </aside>
+
+    <!-- CANVAS -->
+    <section class="canvas">
+      <div class="canvas-title">
+        <h2>Topology <em>— where each skill lives</em></h2>
+        <div class="scale"><b>1 : 1</b> · 12 of 82 skills shown</div>
+      </div>
+
+      <div class="lanes">
+        <div class="lane-head source"><span>◆ <b>Source</b> · ~/.claude/skills</span><span class="tag">REV aa3b1f0</span></div>
+        <div class="lane-head"><span><b>Claude Code</b></span><span class="tag">~/.claude/skills</span></div>
+        <div class="lane-head"><span><b>Codex</b></span><span class="tag">~/.codex/skills</span></div>
+        <div class="lane-head"><span><b>Cursor</b></span><span class="tag">~/.cursor/skills</span></div>
+      </div>
+
+      <div class="rows">
+        <div class="row sync cur">
+          <div class="pin">▸</div>
+          <div class="cell src">
+            <div class="node">
+              <span class="name">brainstorming</span>
+              <span class="sub">mine · 12.4 kB · 14 files</span>
+            </div>
+          </div>
+          <div class="cell t sync">
+            <div class="node sync"><span class="name">brainstorming</span><span class="sub">in sync · aa3b</span></div>
+          </div>
+          <div class="cell t sync">
+            <div class="node sync"><span class="name">brainstorming</span><span class="sub">in sync · aa3b</span></div>
+          </div>
+          <div class="cell t sync">
+            <div class="node sync"><span class="name">brainstorming</span><span class="sub">in sync · aa3b</span></div>
+          </div>
+        </div>
+
+        <div class="row drift">
+          <div class="cell src">
+            <div class="node">
+              <span class="name">writing-skills</span>
+              <span class="sub">mine · 19.0 kB</span>
+            </div>
+          </div>
+          <div class="cell t sync"><div class="node sync"><span class="name">writing-skills</span><span class="sub">in sync · 7f12</span></div></div>
+          <div class="cell t drift"><div class="node drift"><span class="name">writing-skills</span><span class="sub">drift · 1 behind</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">writing-skills</span><span class="sub">in sync · 7f12</span></div></div>
+        </div>
+
+        <div class="row sync">
+          <div class="cell src"><div class="node"><span class="name">test-driven-development</span><span class="sub">mine · 7.9 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">tdd</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">tdd</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">tdd</span><span class="sub">in sync</span></div></div>
+        </div>
+
+        <div class="row sync">
+          <div class="cell src"><div class="node"><span class="name">verification-before-completion</span><span class="sub">mine · 6.8 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">verification…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">verification…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">verification…</span><span class="sub">in sync</span></div></div>
+        </div>
+
+        <div class="row drift">
+          <div class="cell src"><div class="node"><span class="name">using-git-worktrees</span><span class="sub">mine · 4.2 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">using-git-worktrees</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">using-git-worktrees</span><span class="sub">in sync</span></div></div>
+          <div class="cell t drift"><div class="node drift"><span class="name">using-git-worktrees</span><span class="sub">drift · file diff</span></div></div>
+        </div>
+
+        <div class="row sync">
+          <div class="cell src"><div class="node"><span class="name">dispatching-parallel-agents</span><span class="sub">mine · 5.5 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">dispatching-parallel…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">dispatching-parallel…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">dispatching-parallel…</span><span class="sub">in sync</span></div></div>
+        </div>
+
+        <div class="row sync">
+          <div class="cell src"><div class="node"><span class="name">subagent-driven-development</span><span class="sub">mine · 8.7 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">subagent-driven…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">subagent-driven…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">subagent-driven…</span><span class="sub">in sync</span></div></div>
+        </div>
+
+        <div class="row">
+          <div class="cell src"><div class="node" style="border-color: rgba(94,194,255,0.25); background: rgba(94,194,255,0.05);"><span class="name">systematic-debugging</span><span class="sub" style="color:#5ec2ff;">bundle · read-only</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">systematic-debugging</span><span class="sub">vendored</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">systematic-debugging</span><span class="sub">vendored</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">systematic-debugging</span><span class="sub">vendored</span></div></div>
+        </div>
+
+        <div class="row">
+          <div class="cell src"><div class="node ext"><span class="name">frontend-design</span><span class="sub">built-in · anthropic</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">frontend-design</span><span class="sub">vendored</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">frontend-design</span><span class="sub">vendored</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">frontend-design</span><span class="sub">vendored</span></div></div>
+        </div>
+
+        <div class="row drift">
+          <div class="cell src"><div class="node miss"><span class="name">jetpack-theme-visual-qa</span><span class="sub">unknown · classify?</span></div></div>
+          <div class="cell t miss"><div class="node miss"><span class="name">— absent</span><span class="sub">not installed</span></div></div>
+          <div class="cell t drift"><div class="node drift"><span class="name">jetpack-theme-visual-qa</span><span class="sub">found · 9.2 kB</span></div></div>
+          <div class="cell t miss"><div class="node miss"><span class="name">— absent</span><span class="sub">not installed</span></div></div>
+        </div>
+
+        <div class="row sync">
+          <div class="cell src"><div class="node"><span class="name">finishing-a-development-branch</span><span class="sub">mine · 3.4 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">finishing-a-development…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">finishing-a-development…</span><span class="sub">in sync</span></div></div>
+          <div class="cell t miss"><div class="node miss"><span class="name">— absent</span><span class="sub">not installed</span></div></div>
+        </div>
+
+        <div class="row sync">
+          <div class="cell src"><div class="node"><span class="name">writing-plans</span><span class="sub">mine · 7.3 kB</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">writing-plans</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">writing-plans</span><span class="sub">in sync</span></div></div>
+          <div class="cell t sync"><div class="node sync"><span class="name">writing-plans</span><span class="sub">in sync</span></div></div>
+        </div>
+      </div>
+
+      <div class="canvas-foot">
+        <span>82 nodes · 246 edges · 3 drift · 3 unknown</span>
+        <span class="grow"></span>
+        <button class="btn">Preview diff</button>
+        <button class="btn">Pull from target</button>
+        <button class="btn primary">Sync all <span style="color: rgba(0,0,0,0.55); border-left: 1px solid rgba(0,0,0,0.18); padding-left: 8px;">⌘ ↵</span></button>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="right">
+      <div class="head">
+        <span>Selected · 1 of 82</span>
+        <b>● MINE</b>
+      </div>
+      <h3>brainstorming<br/><em>— the patient one.</em></h3>
+      <div class="strap">14 files · 12.4 kB · last edited 11:38</div>
+
+      <div class="stat-row">
+        <div class="s"><div class="k">targets present</div><div class="v">3<em>/4</em></div></div>
+        <div class="s"><div class="k">in sync</div><div class="v"><em>3</em></div></div>
+        <div class="s"><div class="k">archived versions</div><div class="v">17</div></div>
+        <div class="s"><div class="k">revision</div><div class="v" style="font-size:16px;font-family:var(--mono);font-style:normal;color:var(--cyan);">aa3b1f0</div></div>
+      </div>
+
+      <div class="targets-list">
+        <div class="t"><span class="dot"></span><span class="nm">Claude Code <em>~/.claude</em></span><span class="hash">aa3b1f0</span><span class="ago">3m ago</span></div>
+        <div class="t"><span class="dot"></span><span class="nm">Codex <em>~/.codex</em></span><span class="hash">aa3b1f0</span><span class="ago">3m ago</span></div>
+        <div class="t"><span class="dot"></span><span class="nm">Cursor <em>~/.cursor</em></span><span class="hash">aa3b1f0</span><span class="ago">3m ago</span></div>
+        <div class="t miss"><span class="dot"></span><span class="nm">Cowork <em>.skill</em></span><span class="hash">— not built</span><span class="ago">build →</span></div>
+      </div>
+
+      <div class="diff-block">
+        <span class="h">last change · 11:38:02</span>
+        <span class="meta">SKILL.md @@</span>
+        <span class="del">- Use before any creative work, when starting a feature.</span>
+        <br/><span class="add">+ You MUST use this before any creative work — creating</span>
+        <br/><span class="add">+ features, building components, adding functionality, or</span>
+        <br/><span class="add">+ modifying behavior. Explores intent and design before</span>
+        <br/><span class="add">+ implementation.</span>
+      </div>
+
+      <div class="archive">
+        <b>Archive policy.</b> Every overwrite is moved to
+        <code style="color:var(--cyan);">~/.Trash/skill-sync-archive/&lt;ts&gt;/</code>
+        before the new content is written. Recoverable via Finder. <a>open archive →</a>
+      </div>
+
+      <div class="right-actions">
+        <button class="btn">Open in editor</button>
+        <button class="btn">Diff vs codex</button>
+        <button class="btn primary">Push to all</button>
+      </div>
+    </aside>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Skill Sync — Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-soft: #0f0f0f;
+    --bg-elev: #141414;
+    --bg-hover: #181818;
+    --line: #1c1c1c;
+    --line-strong: #262626;
+    --fg: #ededed;
+    --fg-mid: #a1a1a1;
+    --fg-dim: #6f6f6f;
+    --fg-faint: #4a4a4a;
+    --accent: #d3ec5a;
+    --accent-glow: rgba(211,236,90,0.18);
+    --drift: #f5a524;
+    --danger: #f5544c;
+    --info: #5ec2ff;
+    --radius: 6px;
+    --sans: "Geist", ui-sans-serif, system-ui, -apple-system;
+    --mono: "Geist Mono", ui-monospace, "JetBrains Mono", Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-feature-settings: "ss01","ss02","cv11"; -webkit-font-smoothing: antialiased; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(211,236,90,0.04), transparent 60%),
+      radial-gradient(800px 500px at -10% 110%, rgba(94,194,255,0.03), transparent 60%),
+      var(--bg);
+    min-height: 100vh;
+  }
+
+  /* — Title bar — */
+  .titlebar {
+    height: 36px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 10px;
+    backdrop-filter: blur(8px);
+    background: rgba(10,10,10,0.6);
+    position: sticky; top: 0; z-index: 30;
+  }
+  .traffic { display: flex; gap: 6px; margin-right: 4px; }
+  .traffic span { width: 11px; height: 11px; border-radius: 50%; background: #3a3a3a; }
+  .traffic span:nth-child(1) { background: #ff5f57; }
+  .traffic span:nth-child(2) { background: #febc2e; }
+  .traffic span:nth-child(3) { background: #28c840; }
+  .brand { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--fg-mid); display: flex; align-items: center; gap: 8px; }
+  .brand .caret { display: inline-block; width: 7px; height: 12px; background: var(--accent); margin-left: 2px; animation: blink 1.05s steps(1) infinite; box-shadow: 0 0 8px var(--accent-glow); }
+  @keyframes blink { 50% { opacity: 0; } }
+  .titlebar .spacer { flex: 1; }
+  .titlebar .sync-state { font-family: var(--mono); font-size: 11px; color: var(--fg-mid); display: flex; align-items: center; gap: 8px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 0 var(--accent-glow); animation: pulse 1.8s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(211,236,90,0.4); } 70% { box-shadow: 0 0 0 10px rgba(211,236,90,0); } 100% { box-shadow: 0 0 0 0 rgba(211,236,90,0); } }
+  .titlebar .ver { font-family: var(--mono); font-size: 11px; color: var(--fg-faint); }
+
+  /* — Shell — */
+  .shell { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 36px); }
+
+  /* — Sidebar — */
+  aside.nav {
+    border-right: 1px solid var(--line);
+    padding: 18px 12px 12px;
+    display: flex; flex-direction: column; gap: 2px;
+    background: rgba(255,255,255,0.005);
+  }
+  .nav-section { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--fg-faint); padding: 14px 10px 6px; text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px; border-radius: 5px; cursor: pointer; color: var(--fg-mid);
+    font-size: 13px; letter-spacing: -0.005em;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .nav-item:hover { background: var(--bg-hover); color: var(--fg); }
+  .nav-item.active { background: var(--bg-elev); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .nav-item .ico { width: 14px; height: 14px; opacity: 0.85; }
+  .nav-item .label { display: flex; align-items: center; gap: 10px; }
+  .nav-item .count { font-family: var(--mono); font-size: 10.5px; color: var(--fg-faint); }
+  .nav-item.active .count { color: var(--accent); }
+  .nav-kbd { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--bg-elev); color: var(--fg-faint); border: 1px solid var(--line); }
+  .nav-footer { margin-top: auto; padding: 10px; font-family: var(--mono); font-size: 10.5px; color: var(--fg-faint); line-height: 1.6; border-top: 1px dashed var(--line); }
+  .nav-footer .row { display: flex; justify-content: space-between; }
+  .nav-footer .row span:last-child { color: var(--fg-mid); }
+
+  /* — Main content — */
+  main { padding: 28px 32px 80px; max-width: 1280px; }
+
+  .crumb { font-family: var(--mono); font-size: 11px; color: var(--fg-faint); display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+  .crumb .sep { color: var(--fg-faint); }
+  .crumb b { color: var(--fg-mid); font-weight: 500; }
+
+  .page-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 4px; }
+  h1 { font-family: var(--sans); font-weight: 600; font-size: 28px; letter-spacing: -0.02em; margin: 0; line-height: 1.05; }
+  .page-sub { font-family: var(--mono); font-size: 12px; color: var(--fg-dim); margin-top: 6px; }
+  .page-sub b { color: var(--fg); font-weight: 500; }
+
+  /* — Stats — */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 8px; margin-top: 22px; overflow: hidden; background: var(--bg-soft); }
+  .stat { padding: 16px 18px; border-right: 1px solid var(--line); position: relative; }
+  .stat:last-child { border-right: 0; }
+  .stat .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--fg-faint); text-transform: uppercase; }
+  .stat .v { font-family: var(--sans); font-feature-settings: "tnum","ss01"; font-weight: 500; font-size: 28px; letter-spacing: -0.02em; margin-top: 6px; line-height: 1; }
+  .stat .d { font-family: var(--mono); font-size: 11px; color: var(--fg-mid); margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+  .stat .d .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .stat .d.warn .dot { background: var(--drift); }
+  .stat .d.bad .dot { background: var(--danger); }
+
+  /* — Toolbar — */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin: 26px 0 14px; }
+  .chips { display: flex; gap: 4px; padding: 3px; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 8px; }
+  .chip { font-family: var(--mono); font-size: 11px; color: var(--fg-mid); padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+  .chip .n { color: var(--fg-faint); margin-left: 6px; }
+  .chip.active { background: var(--bg-elev); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .chip.active .n { color: var(--accent); }
+  .toolbar .grow { flex: 1; }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px; border: 1px solid var(--line); background: var(--bg-soft); border-radius: 8px;
+    color: var(--fg-mid); font-size: 12.5px; min-width: 280px;
+  }
+  .search input { background: transparent; border: 0; outline: 0; color: var(--fg); font: inherit; flex: 1; }
+  .search input::placeholder { color: var(--fg-dim); }
+  .search .kbd { font-family: var(--mono); font-size: 10.5px; padding: 1px 5px; border-radius: 3px; background: var(--bg-elev); color: var(--fg-faint); border: 1px solid var(--line); }
+  .btn {
+    font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+    padding: 7px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--line);
+    background: var(--bg-soft); color: var(--fg);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: var(--bg-elev); }
+  .btn.primary {
+    background: var(--accent); color: #0a0a0a; border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(211,236,90,0.25), 0 8px 24px -8px rgba(211,236,90,0.45);
+  }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn .mono { font-family: var(--mono); font-size: 10.5px; color: rgba(0,0,0,0.55); padding-left: 4px; border-left: 1px solid rgba(0,0,0,0.18); margin-left: 4px; }
+
+  /* — Table — */
+  .table-wrap { border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-faint);
+    padding: 11px 14px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.01);
+  }
+  tbody tr { border-bottom: 1px solid var(--line); transition: background 120ms ease; }
+  tbody tr:last-child { border-bottom: 0; }
+  tbody tr:hover { background: var(--bg-hover); }
+  tbody td { padding: 12px 14px; vertical-align: middle; }
+  td.name { color: var(--fg); font-weight: 500; }
+  td.name .path { font-family: var(--mono); font-size: 11px; color: var(--fg-faint); margin-top: 2px; }
+
+  .badge { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; padding: 3px 7px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--fg-mid); background: rgba(255,255,255,0.02); display: inline-flex; align-items: center; gap: 6px; }
+  .badge .d { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .badge.mine { color: var(--accent); border-color: rgba(211,236,90,0.25); background: rgba(211,236,90,0.06); }
+  .badge.bundle { color: var(--info); border-color: rgba(94,194,255,0.22); background: rgba(94,194,255,0.05); }
+  .badge.builtin { color: #b78cff; border-color: rgba(183,140,255,0.22); background: rgba(183,140,255,0.05); }
+  .badge.unknown { color: var(--drift); border-color: rgba(245,165,36,0.25); background: rgba(245,165,36,0.06); }
+
+  /* — Drift visualizer: 4-dot per-target — */
+  .drift {
+    display: inline-flex; gap: 6px; align-items: center;
+    font-family: var(--mono); font-size: 10.5px; color: var(--fg-dim);
+  }
+  .drift .targets { display: inline-flex; gap: 3px; }
+  .drift .t {
+    width: 16px; height: 6px; border-radius: 2px;
+    background: var(--line-strong);
+    position: relative;
+  }
+  .drift .t.on { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+  .drift .t.drift { background: var(--drift); }
+  .drift .t.miss { background: transparent; border: 1px dashed var(--line-strong); }
+  .drift .lbl { color: var(--fg-faint); }
+
+  td.updated { font-family: var(--mono); font-size: 11.5px; color: var(--fg-mid); }
+  td.size { font-family: var(--mono); font-size: 11.5px; color: var(--fg-dim); text-align: right; }
+
+  .row-action {
+    opacity: 0; transition: opacity 120ms ease; display: inline-flex; gap: 6px;
+  }
+  tr:hover .row-action { opacity: 1; }
+  .row-action .b {
+    font-family: var(--mono); font-size: 10.5px; color: var(--fg-mid);
+    padding: 3px 7px; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--bg-elev);
+  }
+  .row-action .b.go { color: #0a0a0a; background: var(--accent); border-color: var(--accent); }
+
+  /* — Selected row glow — */
+  tr.selected { background: linear-gradient(90deg, rgba(211,236,90,0.06), transparent 40%); }
+  tr.selected td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
+
+  /* — Footer/cmdbar — */
+  .cmdbar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--line-strong);
+    background: rgba(15,15,15,0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    font-family: var(--mono); font-size: 11px; color: var(--fg-mid);
+    box-shadow: 0 24px 64px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02);
+    z-index: 20;
+  }
+  .cmdbar .kbd { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--bg-elev); color: var(--fg-mid); border: 1px solid var(--line); }
+  .cmdbar .sep { color: var(--fg-faint); }
+  .cmdbar a { color: var(--fg); text-decoration: none; }
+
+  /* — Staggered reveal — */
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .stat, tbody tr, .toolbar > *, .stats, .crumb, h1, .page-sub { animation: rise 540ms cubic-bezier(.2,.7,.2,1) both; }
+  .stat:nth-child(1) { animation-delay: 40ms; }
+  .stat:nth-child(2) { animation-delay: 90ms; }
+  .stat:nth-child(3) { animation-delay: 140ms; }
+  .stat:nth-child(4) { animation-delay: 190ms; }
+  tbody tr:nth-child(1) { animation-delay: 240ms; }
+  tbody tr:nth-child(2) { animation-delay: 280ms; }
+  tbody tr:nth-child(3) { animation-delay: 320ms; }
+  tbody tr:nth-child(4) { animation-delay: 360ms; }
+  tbody tr:nth-child(5) { animation-delay: 400ms; }
+  tbody tr:nth-child(6) { animation-delay: 440ms; }
+  tbody tr:nth-child(7) { animation-delay: 480ms; }
+  tbody tr:nth-child(8) { animation-delay: 520ms; }
+  tbody tr:nth-child(9) { animation-delay: 560ms; }
+  tbody tr:nth-child(10) { animation-delay: 600ms; }
+  tbody tr:nth-child(11) { animation-delay: 640ms; }
+  tbody tr:nth-child(12) { animation-delay: 680ms; }
+  tbody tr:nth-child(13) { animation-delay: 720ms; }
+
+  /* — Concept switcher — */
+  .switch {
+    position: fixed; right: 18px; top: 50px; z-index: 40;
+    display: flex; flex-direction: column; gap: 6px; padding: 8px;
+    border: 1px solid var(--line); background: rgba(15,15,15,0.85);
+    backdrop-filter: blur(12px); border-radius: 12px;
+    font-family: var(--mono); font-size: 11px; color: var(--fg-mid);
+  }
+  .switch a { color: var(--fg-mid); text-decoration: none; padding: 4px 8px; border-radius: 5px; }
+  .switch a:hover { background: var(--bg-elev); color: var(--fg); }
+  .switch a.cur { color: var(--accent); }
+
+  /* — Grid background pattern, very subtle — */
+  main::before {
+    content: ""; position: fixed; inset: 36px 0 0 220px; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(900px 500px at 40% 0%, black, transparent 75%);
+  }
+  main > * { position: relative; z-index: 1; }
+
+  /* Drift sparkline */
+  .spark { display: inline-flex; align-items: end; gap: 2px; height: 14px; }
+  .spark span { width: 3px; background: var(--fg-faint); border-radius: 1px; }
+  .spark span.hot { background: var(--drift); }
+</style>
+</head>
+<body>
+
+  <div class="titlebar">
+    <div class="traffic"><span></span><span></span><span></span></div>
+    <div class="brand">// SKILL.SYNC<span class="caret"></span></div>
+    <div class="spacer"></div>
+    <div class="sync-state">
+      <span class="pulse"></span>
+      <span>watching · 4 targets · 30s</span>
+    </div>
+    <span class="ver">v0.1.0 · darwin/arm64</span>
+  </div>
+
+  <nav class="switch">
+    <a class="cur" href="./console.html">A · console</a>
+    <a href="./atelier.html">B · atelier</a>
+    <a href="./topology.html">C · topology</a>
+  </nav>
+
+  <div class="shell">
+    <aside class="nav">
+      <div class="nav-section">Workspace</div>
+      <div class="nav-item active">
+        <span class="label"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M2 8h12M2 12h12"/></svg>Library</span>
+        <span class="count">82</span>
+      </div>
+      <div class="nav-item">
+        <span class="label"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="9" y="3" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Targets</span>
+        <span class="count">4</span>
+      </div>
+      <div class="nav-item">
+        <span class="label"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 3v5l3 2"/><circle cx="8" cy="8" r="6"/></svg>Activity</span>
+        <span class="count">214</span>
+      </div>
+      <div class="nav-item">
+        <span class="label"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 7l5-4 5 4v6H3z"/><path d="M6 13V9h4v4"/></svg>Packages</span>
+        <span class="count">3</span>
+      </div>
+
+      <div class="nav-section">Source</div>
+      <div class="nav-item" style="padding-top:5px; padding-bottom:5px;">
+        <span class="label" style="font-family: var(--mono); font-size: 11.5px; color: var(--fg-mid);">~/.claude/skills</span>
+      </div>
+      <div class="nav-item" style="padding-top:5px;">
+        <span class="label" style="font-family: var(--mono); font-size: 11.5px; color: var(--fg-faint);">+ change source</span>
+      </div>
+
+      <div class="nav-section">Targets</div>
+      <div class="nav-item"><span class="label">Claude Code</span><span class="count">●</span></div>
+      <div class="nav-item"><span class="label">Codex</span><span class="count">●</span></div>
+      <div class="nav-item"><span class="label">Cursor</span><span class="count">●</span></div>
+      <div class="nav-item"><span class="label" style="color:var(--fg-faint);">Cowork (zip)</span><span class="count" style="color:var(--fg-faint);">○</span></div>
+
+      <div class="nav-footer">
+        <div class="row"><span>last sync</span><span>11:42:08</span></div>
+        <div class="row"><span>archive</span><span>~/.Trash/skill-sync</span></div>
+        <div class="row"><span>build</span><span>0a14f3c</span></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="crumb">~/.claude/skills <span class="sep">›</span> <b>library</b></div>
+      <div class="page-title">
+        <div>
+          <h1>Library</h1>
+          <div class="page-sub"><b>82</b> skills <span class="sep">·</span> <b>4</b> targets <span class="sep">·</span> <span style="color:var(--drift)">3 drifting</span> <span class="sep">·</span> last scan <b>11:42:08</b></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn">Preview <span class="mono">⌘ P</span></button>
+          <button class="btn primary">Sync all <span class="mono">↵</span></button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k">In sync</div>
+          <div class="v">76</div>
+          <div class="d"><span class="dot"></span>across 4 targets</div>
+        </div>
+        <div class="stat">
+          <div class="k">Drift</div>
+          <div class="v">3</div>
+          <div class="d warn"><span class="dot"></span>codex · 2 · cursor · 1</div>
+        </div>
+        <div class="stat">
+          <div class="k">Unknown</div>
+          <div class="v">3</div>
+          <div class="d bad"><span class="dot"></span>needs ownership tag</div>
+        </div>
+        <div class="stat">
+          <div class="k">Archived this week</div>
+          <div class="v">17</div>
+          <div class="d"><span class="dot" style="background:var(--fg-mid)"></span><span class="spark"><span style="height:30%"></span><span style="height:60%"></span><span style="height:45%"></span><span style="height:80%"></span><span style="height:25%" class="hot"></span><span style="height:90%"></span><span style="height:55%"></span></span></div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="chips">
+          <div class="chip active">All <span class="n">82</span></div>
+          <div class="chip">Mine <span class="n">34</span></div>
+          <div class="chip">Bundle <span class="n">21</span></div>
+          <div class="chip">Built-in <span class="n">24</span></div>
+          <div class="chip">Unknown <span class="n">3</span></div>
+        </div>
+        <div class="grow"></div>
+        <div class="search">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+          <input placeholder="filter skills · regex with /…/" />
+          <span class="kbd">/</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 36%">Skill</th>
+              <th>Owner</th>
+              <th>Targets</th>
+              <th>Updated</th>
+              <th style="text-align:right">Size</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="selected">
+              <td class="name">brainstorming<div class="path">superpowers/brainstorming · 14 files</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t miss"></span></span><span class="lbl">3/4 in sync</span></span></td>
+              <td class="updated">11:38:02</td>
+              <td class="size">12.4 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">test-driven-development<div class="path">superpowers/test-driven-development · 8 files</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">4/4 in sync</span></span></td>
+              <td class="updated">11:30:11</td>
+              <td class="size">7.9 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">systematic-debugging<div class="path">superpowers/systematic-debugging</div></td>
+              <td><span class="badge bundle"><span class="d"></span>Bundle</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">read-only</span></span></td>
+              <td class="updated">2d ago</td>
+              <td class="size">5.1 kB</td>
+              <td><div class="row-action"><span class="b">open</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">frontend-design<div class="path">anthropic-skills/frontend-design · 21 files</div></td>
+              <td><span class="badge builtin"><span class="d"></span>Built-in</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">read-only</span></span></td>
+              <td class="updated">1w ago</td>
+              <td class="size">31.2 kB</td>
+              <td><div class="row-action"><span class="b">open</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">writing-skills<div class="path">superpowers/writing-skills · 11 files</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift" style="color:var(--drift)"><span class="targets"><span class="t on"></span><span class="t drift"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl" style="color:var(--drift)">codex · drift</span></span></td>
+              <td class="updated">11:14:55</td>
+              <td class="size">19.0 kB</td>
+              <td><div class="row-action"><span class="b">diff</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">verification-before-completion<div class="path">superpowers/verification-before-completion</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">4/4 in sync</span></span></td>
+              <td class="updated">11:14:09</td>
+              <td class="size">6.8 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">using-git-worktrees<div class="path">superpowers/using-git-worktrees</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift" style="color:var(--drift)"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t drift"></span><span class="t miss"></span></span><span class="lbl" style="color:var(--drift)">cursor · drift</span></span></td>
+              <td class="updated">10:58:31</td>
+              <td class="size">4.2 kB</td>
+              <td><div class="row-action"><span class="b">diff</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">dispatching-parallel-agents<div class="path">superpowers/dispatching-parallel-agents</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">4/4 in sync</span></span></td>
+              <td class="updated">yesterday</td>
+              <td class="size">5.5 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">subagent-driven-development<div class="path">superpowers/subagent-driven-development</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">4/4 in sync</span></span></td>
+              <td class="updated">yesterday</td>
+              <td class="size">8.7 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">finishing-a-development-branch<div class="path">superpowers/finishing-a-development-branch</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t miss"></span></span><span class="lbl">3/4 in sync</span></span></td>
+              <td class="updated">yesterday</td>
+              <td class="size">3.4 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">jetpack-theme-visual-qa<div class="path">unknown · introduced 2d ago</div></td>
+              <td><span class="badge unknown"><span class="d"></span>Unknown</span></td>
+              <td><span class="drift"><span class="targets"><span class="t miss"></span><span class="t on"></span><span class="t miss"></span><span class="t miss"></span></span><span class="lbl" style="color:var(--drift)">needs tag</span></span></td>
+              <td class="updated">2d ago</td>
+              <td class="size">9.2 kB</td>
+              <td><div class="row-action"><span class="b go">classify</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">find-skills<div class="path">superpowers/find-skills</div></td>
+              <td><span class="badge bundle"><span class="d"></span>Bundle</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">read-only</span></span></td>
+              <td class="updated">1w ago</td>
+              <td class="size">2.1 kB</td>
+              <td><div class="row-action"><span class="b">open</span></div></td>
+            </tr>
+            <tr>
+              <td class="name">writing-plans<div class="path">superpowers/writing-plans</div></td>
+              <td><span class="badge mine"><span class="d"></span>Mine</span></td>
+              <td><span class="drift"><span class="targets"><span class="t on"></span><span class="t on"></span><span class="t on"></span><span class="t on"></span></span><span class="lbl">4/4 in sync</span></span></td>
+              <td class="updated">3d ago</td>
+              <td class="size">7.3 kB</td>
+              <td><div class="row-action"><span class="b">open</span><span class="b">pull</span><span class="b go">push</span></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div class="cmdbar">
+    <span>⌘ K</span><span>command palette</span>
+    <span class="sep">·</span>
+    <span class="kbd">/</span><span>filter</span>
+    <span class="sep">·</span>
+    <span class="kbd">G</span><span>then</span><span class="kbd">L</span><span>library</span>
+    <span class="sep">·</span>
+    <span class="kbd">⌘↵</span><span>sync</span>
+  </div>
+
+</body>
+</html>

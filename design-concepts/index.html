@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Skill Sync — Three concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0c0e;
+    --bg-soft: #131316;
+    --fg: #ededed;
+    --fg-mid: #a1a1a1;
+    --fg-dim: #6f6f6f;
+    --fg-faint: #4a4a4a;
+    --line: #1f1f22;
+    --cyan: #6ad9d2;
+    --lime: #d3ec5a;
+    --gold: #c19f49;
+    --serif: "Instrument Serif", "Iowan Old Style", serif;
+    --sans: "Geist", ui-sans-serif, system-ui;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(106,217,210,0.04), transparent 60%),
+      radial-gradient(900px 500px at -5% 110%, rgba(211,236,90,0.03), transparent 60%),
+      var(--bg);
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(1100px 600px at 50% 30%, black, transparent 80%);
+  }
+  body > * { position: relative; z-index: 1; }
+
+  header {
+    padding: 56px 48px 32px;
+    display: flex; align-items: end; justify-content: space-between;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 14px;
+    font-family: var(--mono); font-size: 11px; color: var(--fg-dim); letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .brand .mark {
+    font-family: var(--serif); font-style: italic; font-size: 26px; color: var(--fg);
+    letter-spacing: -0.015em; text-transform: none;
+  }
+  .brand .mark b { font-style: normal; font-weight: 500; color: var(--fg); }
+  .meta { font-family: var(--mono); font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+  .meta b { color: var(--fg); font-weight: 500; }
+
+  .hero {
+    padding: 40px 48px 64px;
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px;
+    align-items: end;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 400; font-size: 96px; line-height: 0.95;
+    letter-spacing: -0.025em; margin: 0;
+    text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--fg-mid); }
+  h1 .cy { font-style: italic; color: var(--cyan); }
+  .lede {
+    font-family: var(--serif); font-size: 19px; line-height: 1.45; color: var(--fg-mid); max-width: 56ch;
+    letter-spacing: -0.005em;
+  }
+  .lede b { color: var(--fg); font-weight: 500; }
+
+  .row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    padding: 48px 48px 64px;
+  }
+  .card {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg-soft);
+    overflow: hidden;
+    text-decoration: none; color: inherit;
+    display: flex; flex-direction: column;
+    min-height: 540px;
+    transition: transform 240ms cubic-bezier(.2,.7,.2,1), border-color 240ms ease, box-shadow 240ms ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,255,255,0.18);
+    box-shadow: 0 24px 60px -16px rgba(0,0,0,0.6);
+  }
+  .card .preview {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+    min-height: 280px;
+  }
+  .card .body { padding: 24px 24px 22px; }
+  .card .no {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-dim);
+  }
+  .card h3 {
+    font-family: var(--serif); font-weight: 400; font-size: 34px; letter-spacing: -0.02em; margin: 4px 0 6px;
+    line-height: 1; color: var(--fg);
+  }
+  .card h3 em { font-style: italic; color: var(--fg-mid); }
+  .card .desc {
+    font-family: var(--sans); font-size: 13.5px; color: var(--fg-mid); line-height: 1.55; max-width: 38ch;
+    margin: 8px 0 12px;
+  }
+  .card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .card .tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--fg-mid);
+  }
+  .card .open {
+    margin-top: 18px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--fg); display: inline-flex; align-items: center; gap: 8px;
+  }
+  .card .open .arrow { transition: transform 200ms ease; }
+  .card:hover .open .arrow { transform: translateX(4px); }
+
+  /* — Preview A: console — */
+  .pv-a {
+    background: #0a0a0a;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 28px 28px;
+    padding: 18px 18px;
+    color: var(--fg);
+    font-family: var(--mono); font-size: 10px;
+  }
+  .pv-a .bar { display: flex; gap: 8px; align-items: center; color: var(--fg-dim); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px; }
+  .pv-a .bar .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px rgba(211,236,90,0.5); }
+  .pv-a .ttl { font-family: var(--sans); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: var(--fg); margin-bottom: 4px; }
+  .pv-a .sub { color: var(--fg-dim); font-size: 10.5px; margin-bottom: 16px; }
+  .pv-a .stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #1c1c1c; border-radius: 6px; margin-bottom: 14px; }
+  .pv-a .stat { padding: 10px 12px; border-right: 1px solid #1c1c1c; }
+  .pv-a .stat:last-child { border-right: 0; }
+  .pv-a .stat .k { font-size: 8.5px; letter-spacing: 0.14em; color: var(--fg-faint); text-transform: uppercase; }
+  .pv-a .stat .v { font-family: var(--sans); font-size: 20px; font-weight: 500; letter-spacing: -0.02em; color: var(--fg); margin-top: 4px; }
+  .pv-a .stat .v.warn { color: #f5a524; }
+  .pv-a .rows { border: 1px solid #1c1c1c; border-radius: 6px; overflow: hidden; }
+  .pv-a .r { display: grid; grid-template-columns: 1fr 60px 60px; align-items: center; padding: 7px 10px; border-bottom: 1px solid #1c1c1c; font-size: 10px; }
+  .pv-a .r:last-child { border-bottom: 0; }
+  .pv-a .r .nm { color: var(--fg); font-family: var(--sans); font-size: 11.5px; }
+  .pv-a .r .ow { font-size: 9px; color: var(--lime); }
+  .pv-a .r .ow.b { color: #5ec2ff; }
+  .pv-a .r .ow.u { color: #f5a524; }
+  .pv-a .r .dr { display: inline-flex; gap: 2px; justify-self: end; }
+  .pv-a .r .dr span { width: 12px; height: 5px; background: var(--lime); border-radius: 1px; box-shadow: 0 0 4px rgba(211,236,90,0.4); }
+  .pv-a .r .dr span.d { background: #f5a524; box-shadow: 0 0 4px rgba(245,165,36,0.4); }
+  .pv-a .r .dr span.m { background: transparent; border: 1px dashed #2a2a2a; }
+
+  /* — Preview B: atelier — */
+  .pv-b {
+    background: #f6f2ea;
+    padding: 22px 22px 18px;
+    color: #14110d;
+    font-family: var(--sans);
+    position: relative;
+  }
+  .pv-b::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(20,17,13,0.05) 1px, transparent 1.5px);
+    background-size: 3px 3px;
+    opacity: 0.6;
+  }
+  .pv-b > * { position: relative; }
+  .pv-b .bar { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: #5a5247; border-bottom: 1px solid #d6cdb6; padding-bottom: 8px; margin-bottom: 14px; display: flex; gap: 12px; }
+  .pv-b .bar b { color: #14110d; font-weight: 500; }
+  .pv-b .kicker { font-family: var(--serif); font-style: italic; font-size: 13px; color: #5a5247; margin-bottom: 6px; }
+  .pv-b .ttl { font-family: var(--serif); font-weight: 400; font-size: 36px; letter-spacing: -0.025em; line-height: 0.95; color: #14110d; margin-bottom: 4px; }
+  .pv-b .ttl em { font-style: italic; color: #2a251e; }
+  .pv-b .lede { font-family: var(--serif); font-size: 13.5px; line-height: 1.45; color: #5a5247; max-width: 30ch; margin: 10px 0 14px; }
+  .pv-b .brass { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #14110d; border-bottom: 1px solid #d6cdb6; padding: 8px 0; }
+  .pv-b .brass div { padding: 0 8px; border-right: 1px solid #d6cdb6; }
+  .pv-b .brass div:last-child { border-right: 0; }
+  .pv-b .brass .k { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #8a8170; }
+  .pv-b .brass .v { font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; margin-top: 4px; color: #14110d; font-feature-settings: "onum","tnum"; }
+  .pv-b .brass .v em { font-style: italic; color: #b04a2a; font-size: 14px; }
+  .pv-b .entries { margin-top: 14px; }
+  .pv-b .entry { padding: 9px 0; border-bottom: 1px solid #e8e0cb; display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline; }
+  .pv-b .entry .no { font-family: var(--mono); font-size: 9px; color: #b3a98f; text-align: right; }
+  .pv-b .entry .tt { font-family: var(--serif); font-size: 15px; font-weight: 500; letter-spacing: -0.015em; color: #14110d; }
+  .pv-b .entry .tt em { font-style: italic; color: #5a5247; font-weight: 400; font-size: 13px; margin-left: 4px; }
+  .pv-b .entry .st { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #4a6b3a; }
+  .pv-b .entry .st.dr { color: #b04a2a; }
+
+  /* — Preview C: topology — */
+  .pv-c {
+    background: #07090d;
+    background-image:
+      linear-gradient(rgba(243,236,225,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(243,236,225,0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+    padding: 20px 18px 16px;
+    color: var(--fg);
+    font-family: var(--mono); font-size: 10px;
+  }
+  .pv-c .bar { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .pv-c .ttl { font-family: var(--serif); font-size: 22px; letter-spacing: -0.015em; color: var(--fg); line-height: 1; }
+  .pv-c .ttl em { color: var(--cyan); font-style: italic; }
+  .pv-c .sub { font-size: 9px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase; }
+  .pv-c .lanes { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid rgba(243,236,225,0.12); padding-bottom: 6px; margin-bottom: 6px; }
+  .pv-c .lane { padding: 4px 8px; font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-dim); }
+  .pv-c .lane.src { color: var(--cyan); }
+  .pv-c .rows { display: flex; flex-direction: column; gap: 4px; }
+  .pv-c .r { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0; align-items: center; padding: 3px 0; }
+  .pv-c .n { margin: 0 6px; padding: 5px 8px; border-radius: 3px; background: #0b0e14; border: 1px solid rgba(243,236,225,0.1); font-size: 9.5px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+  .pv-c .n.src { border-color: rgba(106,217,210,0.4); background: rgba(106,217,210,0.07); color: var(--cyan); }
+  .pv-c .n.sync { border-color: rgba(106,217,210,0.25); }
+  .pv-c .n.drift { border-color: rgba(232,164,74,0.35); background: rgba(232,164,74,0.05); color: #e8a44a; }
+  .pv-c .n.miss { border-style: dashed; color: var(--fg-faint); }
+  .pv-c .n + .n::before { content: ""; position: absolute; left: -8px; right: 100%; top: 50%; height: 1px; width: 8px; background-image: repeating-linear-gradient(90deg, var(--cyan) 0 4px, transparent 4px 7px); opacity: 0.6; }
+  .pv-c .r.drift .n.drift::before { background-image: repeating-linear-gradient(90deg, #e8a44a 0 4px, transparent 4px 7px); opacity: 0.9; }
+  .pv-c .legend { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(243,236,225,0.12); display: flex; gap: 14px; font-size: 8.5px; color: var(--fg-dim); letter-spacing: 0.12em; text-transform: uppercase; }
+  .pv-c .legend .ln { width: 18px; height: 1.5px; display: inline-block; vertical-align: middle; margin-right: 5px; }
+  .pv-c .legend .ln.s { background: var(--cyan); }
+  .pv-c .legend .ln.d { background-image: repeating-linear-gradient(90deg, #e8a44a 0 4px, transparent 4px 7px); }
+
+  /* footer */
+  footer {
+    padding: 28px 48px 40px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10.5px; color: var(--fg-dim); letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  footer em { font-family: var(--serif); font-style: italic; color: var(--fg-mid); text-transform: none; letter-spacing: 0; font-size: 13px; }
+
+  /* reveal */
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h1, .lede, .card { animation: rise 720ms cubic-bezier(.2,.7,.2,1) both; }
+  .card:nth-child(1) { animation-delay: 160ms; }
+  .card:nth-child(2) { animation-delay: 240ms; }
+  .card:nth-child(3) { animation-delay: 320ms; }
+  h1 { animation-delay: 0ms; }
+  .lede { animation-delay: 80ms; }
+
+  /* Accent dots in card no */
+  .no .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .card.a .no .dot { background: var(--lime); box-shadow: 0 0 6px rgba(211,236,90,0.4); }
+  .card.b .no .dot { background: var(--gold); }
+  .card.c .no .dot { background: var(--cyan); box-shadow: 0 0 6px rgba(106,217,210,0.4); }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="mark">Skill <em style="font-style: italic; color: var(--fg-mid);">Sync</em></span>
+      <span>· design directions · v0.1</span>
+    </div>
+    <div class="meta">
+      <span>3 concepts · 1 product</span> &nbsp;·&nbsp; <span><b>devinwalker</b></span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Three takes<br/>on a quiet<br/><em>desktop</em> <span class="cy">for skills.</span></h1>
+    <p class="lede">
+      Skill Sync watches <b>~/.claude/skills</b> and keeps the same words landing on Claude Code, Codex, and Cursor — bundles untouched, overwrites archived. Below are three aesthetic directions for the same product, each a different answer to “what would <b>Vercel + Shadcn + Notion</b> feel like, dressed for this job?”
+    </p>
+  </section>
+
+  <section class="row">
+    <!-- A — Console -->
+    <a class="card a" href="./console.html">
+      <div class="preview pv-a">
+        <div class="bar"><span class="dot"></span><span>// SKILL.SYNC</span> <span style="margin-left:auto; color: var(--fg-faint);">v0.1 · darwin</span></div>
+        <div class="ttl">Library</div>
+        <div class="sub">82 skills · 4 targets · last scan 11:42</div>
+        <div class="stats">
+          <div class="stat"><div class="k">In sync</div><div class="v">76</div></div>
+          <div class="stat"><div class="k">Drift</div><div class="v warn">3</div></div>
+          <div class="stat"><div class="k">Unknown</div><div class="v" style="color:#f5544c">3</div></div>
+        </div>
+        <div class="rows">
+          <div class="r"><span class="nm">brainstorming</span><span class="ow">MINE</span><span class="dr"><span></span><span></span><span></span><span class="m"></span></span></div>
+          <div class="r"><span class="nm">writing-skills</span><span class="ow">MINE</span><span class="dr"><span></span><span class="d"></span><span></span><span></span></span></div>
+          <div class="r"><span class="nm">test-driven-development</span><span class="ow">MINE</span><span class="dr"><span></span><span></span><span></span><span></span></span></div>
+          <div class="r"><span class="nm">frontend-design</span><span class="ow b">BUILT-IN</span><span class="dr"><span></span><span></span><span></span><span></span></span></div>
+          <div class="r"><span class="nm">jetpack-theme-visual-qa</span><span class="ow u">?</span><span class="dr"><span class="m"></span><span class="d"></span><span class="m"></span><span class="m"></span></span></div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="no"><span class="dot"></span>A · CONSOLE</div>
+        <h3>Terminal,<br/><em>civilized.</em></h3>
+        <div class="desc">Vercel's discipline turned inward — pitch-black canvas, mono-forward chrome, dense data tables, and a single lime accent that only earns its weight when sync is healthy.</div>
+        <div class="tags">
+          <span class="tag">Dark</span>
+          <span class="tag">Geist + Geist Mono</span>
+          <span class="tag">High density</span>
+          <span class="tag">Lime accent</span>
+          <span class="tag">⌘K</span>
+        </div>
+        <div class="open">Open concept <span class="arrow">→</span></div>
+      </div>
+    </a>
+
+    <!-- B — Atelier -->
+    <a class="card b" href="./atelier.html">
+      <div class="preview pv-b">
+        <div class="bar"><b>S§ Skill Sync</b> <span style="margin-left:auto;">VOL. I · MMXXVI</span></div>
+        <div class="kicker">A library of skills, kept</div>
+        <div class="ttl">Your collection,<br/><em>quietly</em> in sync.</div>
+        <div class="lede">Skill Sync watches the place where you write your skills and keeps the same words landing everywhere that listens.</div>
+        <div class="brass">
+          <div><div class="k">In library</div><div class="v">82</div></div>
+          <div><div class="k">Yours</div><div class="v">34<em>&thinsp;/&thinsp;82</em></div></div>
+          <div><div class="k">Drift</div><div class="v"><em style="font-style:italic;color:#b04a2a;">three</em></div></div>
+        </div>
+        <div class="entries">
+          <div class="entry"><span class="no">001</span><span class="tt">brainstorming<em>— the patient one.</em></span><span class="st">IN SYNC</span></div>
+          <div class="entry"><span class="no">002</span><span class="tt">writing-skills<em>— the editor.</em></span><span class="st dr">DRIFT</span></div>
+          <div class="entry"><span class="no">003</span><span class="tt">test-driven-development<em>— the disciplinarian.</em></span><span class="st">IN SYNC</span></div>
+          <div class="entry"><span class="no">004</span><span class="tt">verification-before-completion<em>— the auditor.</em></span><span class="st">IN SYNC</span></div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="no"><span class="dot"></span>B · ATELIER</div>
+        <h3>Notion as<br/>a <em>quiet library.</em></h3>
+        <div class="desc">Warm paper, deep ink, Fraunces headlines pulled tight, and a gold rule that earns its place. Skills read like catalog entries — each one with a character of its own.</div>
+        <div class="tags">
+          <span class="tag">Light</span>
+          <span class="tag">Fraunces + Geist</span>
+          <span class="tag">Editorial</span>
+          <span class="tag">Catalog rhythm</span>
+          <span class="tag">Reader pane</span>
+        </div>
+        <div class="open">Open concept <span class="arrow">→</span></div>
+      </div>
+    </a>
+
+    <!-- C — Topology -->
+    <a class="card c" href="./topology.html">
+      <div class="preview pv-c">
+        <div class="bar">
+          <span class="ttl">Topology <em>—</em></span>
+          <span class="sub">11:42 · watching</span>
+        </div>
+        <div class="lanes">
+          <div class="lane src">◆ SOURCE</div>
+          <div class="lane">CLAUDE</div>
+          <div class="lane">CODEX</div>
+          <div class="lane">CURSOR</div>
+        </div>
+        <div class="rows">
+          <div class="r"><span class="n src">brainstorming</span><span class="n sync">in sync</span><span class="n sync">in sync</span><span class="n sync">in sync</span></div>
+          <div class="r drift"><span class="n src">writing-skills</span><span class="n sync">in sync</span><span class="n drift">drift</span><span class="n sync">in sync</span></div>
+          <div class="r"><span class="n src">test-driven-development</span><span class="n sync">in sync</span><span class="n sync">in sync</span><span class="n sync">in sync</span></div>
+          <div class="r drift"><span class="n src">using-git-worktrees</span><span class="n sync">in sync</span><span class="n sync">in sync</span><span class="n drift">drift</span></div>
+          <div class="r"><span class="n src">frontend-design</span><span class="n sync">vendored</span><span class="n sync">vendored</span><span class="n sync">vendored</span></div>
+          <div class="r drift"><span class="n miss">jetpack-theme-…</span><span class="n miss">— absent</span><span class="n drift">found</span><span class="n miss">— absent</span></div>
+        </div>
+        <div class="legend">
+          <span><span class="ln s"></span>in sync</span>
+          <span><span class="ln d"></span>drift</span>
+          <span style="margin-left:auto; color: var(--fg-faint);">82 nodes · 246 edges</span>
+        </div>
+      </div>
+      <div class="body">
+        <div class="no"><span class="dot"></span>C · TOPOLOGY</div>
+        <h3>The sync,<br/><em>made visible.</em></h3>
+        <div class="desc">A schematic. Each skill is a node; each tool a lane; each connection a dashed thread that flows when healthy and stutters when it drifts. The product's job, drawn.</div>
+        <div class="tags">
+          <span class="tag">Blueprint dark</span>
+          <span class="tag">Instrument Serif</span>
+          <span class="tag">JetBrains Mono</span>
+          <span class="tag">Lane diagram</span>
+          <span class="tag">Cyan flow</span>
+        </div>
+        <div class="open">Open concept <span class="arrow">→</span></div>
+      </div>
+    </a>
+  </section>
+
+  <footer>
+    <span>Three concepts · One product</span>
+    <em>Pick the one that lies most quietly on your dock.</em>
+    <span>Skill Sync v0.1.0</span>
+  </footer>
+
+</body>
+</html>
