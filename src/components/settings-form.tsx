@@ -35,10 +35,9 @@ export function SettingsForm() {
   if (!data) return <div className="px-8 py-12 eyebrow">Loading…</div>;
 
   async function update(patch: Partial<Settings>) {
-    if (!data) return;
     setBusy(true);
     try {
-      const next: Settings = { ...data, ...patch };
+      const next: Settings = { ...data!, ...patch };
       await ipc.setSettings(next);
       await refetch();
       if (patch.theme) applyTheme(patch.theme as "system" | "light" | "dark");
@@ -61,7 +60,7 @@ export function SettingsForm() {
           />
         </Row>
         <Row label="Show built-ins" hint="Display skills that come from anthropic-skills bundles.">
-          <Toggle on={data.show_builtins} onClick={() => update({ show_builtins: !data.show_builtins })} />
+          <Toggle on={data.show_builtins} onClick={() => update({ show_builtins: !data.show_builtins })} disabled={busy} />
         </Row>
       </Section>
 
@@ -80,6 +79,7 @@ export function SettingsForm() {
                   : [...data.enabled_targets, t];
                 update({ enabled_targets: next });
               }}
+              disabled={busy}
             />
           </Row>
         ))}
@@ -95,7 +95,7 @@ export function SettingsForm() {
           />
         </Row>
         <Row label="Cowork packaging" hint="Enable building .skill zips for Cowork.">
-          <Toggle on={data.cowork_package_enabled} onClick={() => update({ cowork_package_enabled: !data.cowork_package_enabled })} />
+          <Toggle on={data.cowork_package_enabled} onClick={() => update({ cowork_package_enabled: !data.cowork_package_enabled })} disabled={busy} />
         </Row>
       </Section>
 
@@ -106,8 +106,9 @@ export function SettingsForm() {
               <button
                 key={opt}
                 onClick={() => update({ theme: opt })}
+                disabled={busy}
                 className={cn(
-                  "px-3 py-1 rounded font-mono text-[11px] text-muted-foreground transition-colors",
+                  "px-3 py-1 rounded font-mono text-[11px] text-muted-foreground transition-colors disabled:opacity-50",
                   data.theme === opt ? "bg-bg-hover text-foreground ring-1 ring-border-strong" : "hover:text-foreground"
                 )}
               >
@@ -134,15 +135,16 @@ export function SettingsForm() {
   );
 }
 
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
+      disabled={disabled}
       onClick={onClick}
       className={cn(
-        "relative inline-block w-9 h-5 rounded-full transition-colors",
+        "relative inline-block w-9 h-5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
         on ? "bg-primary" : "bg-border"
       )}
     >

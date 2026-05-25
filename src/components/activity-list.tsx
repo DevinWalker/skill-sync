@@ -4,34 +4,44 @@ import { ipc } from "@/lib/ipc";
 import { cn } from "@/lib/utils";
 import type { AuditEntry } from "@/types/bindings";
 
-type FilterId = "all" | "sync" | "pull" | "package" | "refused" | "drift";
+type FilterId = "all" | "sync" | "pull" | "package";
 
 const FILTERS: { id: FilterId; label: string }[] = [
   { id: "all",     label: "All" },
   { id: "sync",    label: "Sync" },
-  { id: "pull",    label: "Pull" },
+  { id: "pull",    label: "Pull-back" },
   { id: "package", label: "Package" },
-  { id: "refused", label: "Refused" },
-  { id: "drift",   label: "Drift" },
 ];
 
 function matchFilter(kind: string, f: FilterId): boolean {
   if (f === "all") return true;
-  if (f === "sync")    return kind === "sync" || kind === "archive";
-  if (f === "pull")    return kind === "pull-back" || kind === "pull";
-  if (f === "package") return kind === "package" || kind === "build-skill";
-  if (f === "refused") return kind === "refused";
-  if (f === "drift")   return kind === "drift-detected" || kind === "drift";
+  if (f === "sync")    return kind === "sync.execute";
+  if (f === "pull")    return kind === "sync.pull_back";
+  if (f === "package") return kind === "package.build";
   return false;
 }
 
-function tone(kind: string): "primary" | "info" | "violet" | "danger" | "warning" | "default" {
-  if (kind === "sync" || kind === "archive") return "primary";
-  if (kind === "pull-back" || kind === "pull") return "info";
-  if (kind === "package" || kind === "build-skill") return "violet";
-  if (kind === "refused") return "danger";
-  if (kind.startsWith("drift")) return "warning";
+function tone(kind: string): "primary" | "info" | "violet" | "default" {
+  if (kind === "sync.execute") return "primary";
+  if (kind === "sync.pull_back") return "info";
+  if (kind === "package.build") return "violet";
   return "default";
+}
+
+function detailFor(e: AuditEntry): string {
+  const data = e.data ?? {};
+  switch (e.kind) {
+    case "sync.execute":   return `${data.rows ?? 0} change${data.rows === 1 ? "" : "s"}`;
+    case "sync.pull_back": return String(data.label ?? "—");
+    case "package.build":  return String(data.skill ?? "—");
+    default:               return "—";
+  }
+}
+
+function outcomeFor(e: AuditEntry): string {
+  const data = e.data ?? {};
+  if (e.kind === "package.build" && data.out) return String(data.out);
+  return "—";
 }
 
 export function ActivityList() {
@@ -81,16 +91,13 @@ export function ActivityList() {
         <ul>
           {shown.map((e, i) => {
             const ts = e.ts.replace("T", " ").replace(/\.\d+Z?$/, "");
-            const data = e.data ?? {};
             return (
               <li key={i} className="grid grid-cols-[120px_120px_1fr_120px_140px] gap-x-3 items-center px-3.5 py-2.5 border-b border-border last:border-b-0 hover:bg-bg-hover">
                 <div className="font-mono text-[11px] text-fg-dim">{ts}</div>
                 <div><Badge variant={tone(e.kind)}>{e.kind}</Badge></div>
-                <div className="font-mono text-[11.5px] text-muted-foreground truncate">
-                  {String(data.skill ?? data.name ?? "—")}
-                </div>
-                <div className="font-mono text-[11px] text-muted-foreground">{String(data.target ?? "—")}</div>
-                <div className="font-mono text-[11px] text-muted-foreground truncate">{String(data.outcome ?? data.reason ?? "—")}</div>
+                <div className="font-mono text-[11.5px] text-muted-foreground truncate">{detailFor(e)}</div>
+                <div className="font-mono text-[11px] text-muted-foreground">—</div>
+                <div className="font-mono text-[11px] text-muted-foreground truncate" title={outcomeFor(e)}>{outcomeFor(e)}</div>
               </li>
             );
           })}
