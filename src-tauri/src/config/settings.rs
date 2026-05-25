@@ -12,6 +12,7 @@ pub struct Settings {
     pub external_bundle_roots: Vec<PathBuf>,
     pub enabled_targets: Vec<String>,
     pub cowork_package_enabled: bool,
+    pub theme: String,
 }
 
 impl Settings {
@@ -24,6 +25,7 @@ impl Settings {
             external_bundle_roots: vec![home.join(".agents/skills")],
             enabled_targets: vec!["claude".into(), "codex".into(), "cursor".into()],
             cowork_package_enabled: true,
+            theme: "system".into(),
         }
     }
 }

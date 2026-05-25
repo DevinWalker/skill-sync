@@ -79,6 +79,24 @@ export function SettingsForm() {
           Show tool built-in skills in Library
         </label>
       </Field>
+      <Field label="Theme">
+        <div className="flex gap-2">
+          {(["system", "light", "dark"] as const).map((t) => (
+            <button
+              key={t}
+              className={
+                "px-2.5 py-1 text-xs rounded border capitalize transition-colors " +
+                (draft.theme === t
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border hover:bg-secondary")
+              }
+              onClick={() => setDraft({ ...draft, theme: t })}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </Field>
       <Button onClick={() => save.mutate(draft)} disabled={save.isPending}>
         {save.isPending ? "Saving…" : "Save"}
       </Button>
