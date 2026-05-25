@@ -1,6 +1,7 @@
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
+import { useUIState } from "@/store/ui-state";
 import { OwnerBadge } from "./owner-badge";
 import { DriftBadge } from "./drift-badge";
 
@@ -10,6 +11,7 @@ export function LibraryTable() {
   const skills = useSkills();
   const { data: ownership } = useOwnership();
   const drift = useDrift();
+  const selectSkill = useUIState((s) => s.selectSkill);
   if (skills.isLoading) return <div className="p-8 text-muted-foreground text-sm">Scanning…</div>;
   if (skills.error) return <div className="p-8 text-danger text-sm">{String(skills.error)}</div>;
   if (!skills.data) return null;
@@ -29,7 +31,11 @@ export function LibraryTable() {
           const confirmed = ownership?.skills?.[s.name]?.class === "mine";
           const row = drift.data?.[s.name] ?? {};
           return (
-            <tr key={s.name} className="border-t border-border">
+            <tr
+              key={s.name}
+              onClick={() => selectSkill(s.name)}
+              className="border-t border-border cursor-pointer hover:bg-secondary/40"
+            >
               <td className="px-6 py-2.5 text-sm">{s.name}</td>
               <td><OwnerBadge klass={s.class} confirmed={confirmed} /></td>
               {TARGETS.map((t) => (
