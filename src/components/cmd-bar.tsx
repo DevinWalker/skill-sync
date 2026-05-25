@@ -15,7 +15,6 @@ export function CmdBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         "font-mono text-[11px] text-muted-foreground " +
         "hover:text-foreground transition-colors"
       }
-      role="region"
     >
       <span className="flex items-center gap-1.5"><Kbd>⌘</Kbd><Kbd>K</Kbd><span>palette</span></span>
       <span className="text-fg-faint">·</span>
