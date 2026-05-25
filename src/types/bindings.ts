@@ -8,3 +8,4 @@ export type OwnershipFile = { version: number, skills: { [key: string]: Ownershi
 export type TargetKind = "directory-mirror" | "package-only";
 export type Target = { install_path: string | null, kind: TargetKind, };
 export type TargetsFile = { version: number, targets: { [key: string]: Target }, };
+export type CandidateLocation = { dir_name: string, path: string, real_path: string, is_symlink: boolean, };

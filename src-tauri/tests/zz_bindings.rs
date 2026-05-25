@@ -11,6 +11,7 @@ use ts_rs::TS;
 use skill_sync::config::ownership::{OwnershipClass, OwnershipEntry, OwnershipFile};
 use skill_sync::config::settings::Settings;
 use skill_sync::config::targets::{Target, TargetKind, TargetsFile};
+use skill_sync::discovery::CandidateLocation;
 use skill_sync::types::Health;
 
 fn decl<T: TS + ?Sized + 'static>() -> String {
@@ -29,6 +30,7 @@ fn aggregate_bindings_ts() {
     out.push_str(&decl::<TargetKind>());
     out.push_str(&decl::<Target>());
     out.push_str(&decl::<TargetsFile>());
+    out.push_str(&decl::<CandidateLocation>());
 
     let path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")

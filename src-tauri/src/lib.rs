@@ -2,6 +2,7 @@ pub mod types;
 pub mod paths;
 pub mod frontmatter;
 pub mod config;
+pub mod discovery;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
