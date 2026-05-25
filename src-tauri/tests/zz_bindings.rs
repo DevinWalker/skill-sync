@@ -14,6 +14,7 @@ use skill_sync::config::targets::{Target, TargetKind, TargetsFile};
 use skill_sync::aggregator::{LocationView, SkillView};
 use skill_sync::discovery::CandidateLocation;
 use skill_sync::provenance::{Class, Provenance, Signal};
+use skill_sync::sync::{PlanAction, PlanRow, SyncPlan};
 use skill_sync::types::Health;
 
 fn decl<T: TS + ?Sized + 'static>() -> String {
@@ -38,6 +39,9 @@ fn aggregate_bindings_ts() {
     out.push_str(&decl::<Provenance>());
     out.push_str(&decl::<LocationView>());
     out.push_str(&decl::<SkillView>());
+    out.push_str(&decl::<PlanAction>());
+    out.push_str(&decl::<PlanRow>());
+    out.push_str(&decl::<SyncPlan>());
 
     let path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")

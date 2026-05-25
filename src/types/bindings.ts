@@ -14,3 +14,6 @@ export type Signal = "CodexSystemPath" | "CursorBuiltinPath" | "ClaudePluginPath
 export type Provenance = { class: Class, signals: Array<Signal>, };
 export type LocationView = { path: string, real_path: string, is_symlink: boolean, hash: string, provenance: Provenance, };
 export type SkillView = { name: string, description: string | null, class: Class, locations: Array<LocationView>, };
+export type PlanAction = "Create" | "Update" | "Skip" | "Refuse";
+export type PlanRow = { skill: string, target: string, action: PlanAction, source: string, destination: string, reason: string | null, };
+export type SyncPlan = { rows: Array<PlanRow>, };
