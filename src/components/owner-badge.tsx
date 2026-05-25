@@ -1,24 +1,22 @@
+import { Badge } from "@/components/ui/badge";
 import type { Class } from "@/types/bindings";
 
-type Config = { label: string; tone: string; mark: string };
-
-const config: Record<Class, Config> = {
-  MineHeuristic: { label: "Mine · auto", tone: "text-warning",          mark: "◇" },
-  Bundle:        { label: "Bundle",      tone: "text-muted-foreground", mark: "○" },
-  ToolBuiltin:   { label: "Built-in",    tone: "text-muted-foreground", mark: "·" },
-  Unknown:       { label: "Unknown",     tone: "text-danger",           mark: "?" },
-};
-
-const confirmedMine: Config = { label: "Mine", tone: "text-primary", mark: "◆" };
+const dot = (
+  <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+);
 
 export function OwnerBadge({ klass, confirmed }: { klass: Class; confirmed?: boolean }) {
-  const c = confirmed && klass === "MineHeuristic" ? confirmedMine : config[klass];
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest ${c.tone}`}
-    >
-      <span aria-hidden className="text-[14px] leading-none translate-y-[-1px]">{c.mark}</span>
-      {c.label}
-    </span>
-  );
+  if (confirmed && klass === "MineHeuristic") {
+    return <Badge variant="primary">{dot}Mine</Badge>;
+  }
+  switch (klass) {
+    case "MineHeuristic":
+      return <Badge variant="warning">{dot}Mine · auto</Badge>;
+    case "Bundle":
+      return <Badge variant="info">{dot}Bundle</Badge>;
+    case "ToolBuiltin":
+      return <Badge variant="violet">{dot}Built-in</Badge>;
+    case "Unknown":
+      return <Badge variant="warning">{dot}Unknown</Badge>;
+  }
 }
