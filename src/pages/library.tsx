@@ -1,4 +1,5 @@
 import { LibraryTable } from "@/components/library-table";
+import { OwnershipInbox } from "@/components/ownership-inbox";
 
 export function LibraryPage() {
   return (
@@ -7,6 +8,7 @@ export function LibraryPage() {
         <h1 className="text-lg">Library</h1>
       </header>
       <LibraryTable />
+      <OwnershipInbox />
     </div>
   );
 }
