@@ -8,7 +8,7 @@ pub mod identity;
 pub mod aggregator;
 pub mod ipc;
 
-use ipc::commands::cmd_list_skills;
+use ipc::commands::{cmd_get_ownership, cmd_list_skills, cmd_set_ownership};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -22,7 +22,12 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![greet, cmd_list_skills])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            cmd_list_skills,
+            cmd_get_ownership,
+            cmd_set_ownership,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
