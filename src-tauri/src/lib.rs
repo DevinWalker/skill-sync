@@ -7,6 +7,7 @@ pub mod provenance;
 pub mod identity;
 pub mod aggregator;
 pub mod ipc;
+pub mod trash;
 
 use ipc::commands::{cmd_get_ownership, cmd_list_skills, cmd_set_ownership};
 
