@@ -16,3 +16,15 @@ export function useExecuteSync() {
     },
   });
 }
+
+export function usePullBack() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skill, target }: { skill: string; target: string }) =>
+      ipc.pullBack(skill, target),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["skills"] });
+      qc.invalidateQueries({ queryKey: ["drift"] });
+    },
+  });
+}

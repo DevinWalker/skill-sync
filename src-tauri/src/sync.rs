@@ -138,6 +138,35 @@ pub fn execute(
     Ok(())
 }
 
+pub fn pull_back(
+    source: &std::path::Path,
+    dest: &std::path::Path,
+    archiver: &dyn crate::trash::MoveArchive,
+    archive_root: &std::path::Path,
+    label: &str,
+) -> std::io::Result<()> {
+    if !dest.exists() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "target missing",
+        ));
+    }
+    if std::fs::symlink_metadata(source)
+        .map(|m| m.file_type().is_symlink())
+        .unwrap_or(false)
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "source is a symlink — refusing",
+        ));
+    }
+    if source.exists() {
+        archiver.archive(source, archive_root, label)?;
+    }
+    copy_dir(dest, source)?;
+    Ok(())
+}
+
 fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
     std::fs::create_dir_all(dst)?;

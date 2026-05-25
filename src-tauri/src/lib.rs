@@ -13,7 +13,7 @@ pub mod drift;
 
 use ipc::commands::{
     cmd_drift_matrix, cmd_execute_sync, cmd_get_ownership, cmd_list_skills, cmd_plan_sync,
-    cmd_set_ownership,
+    cmd_pull_back, cmd_set_ownership,
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -36,6 +36,7 @@ pub fn run() {
             cmd_plan_sync,
             cmd_execute_sync,
             cmd_drift_matrix,
+            cmd_pull_back,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

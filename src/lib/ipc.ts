@@ -16,4 +16,6 @@ export const ipc = {
   executeSync: (plan: SyncPlan) => invoke<void>("cmd_execute_sync", { plan }),
   driftMatrix: () =>
     invoke<Record<string, Record<string, DriftStatus>>>("cmd_drift_matrix"),
+  pullBack: (skill: string, target: string) =>
+    invoke<void>("cmd_pull_back", { skill, target }),
 };

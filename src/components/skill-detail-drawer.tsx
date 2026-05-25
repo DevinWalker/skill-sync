@@ -3,6 +3,7 @@ import { useUIState } from "@/store/ui-state";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
+import { usePullBack } from "@/hooks/use-sync";
 import { OwnershipPicker } from "./ownership-picker";
 import { DriftBadge } from "./drift-badge";
 
@@ -12,6 +13,7 @@ export function SkillDetailDrawer() {
   const skills = useSkills();
   const ownership = useOwnership();
   const drift = useDrift();
+  const pullBack = usePullBack();
   const skill = skills.data?.find((s) => s.name === selected) ?? null;
   return (
     <Sheet open={!!selected} onOpenChange={(v) => !v && close(null)}>
@@ -58,9 +60,27 @@ export function SkillDetailDrawer() {
               </h3>
               <ul className="space-y-1.5">
                 {Object.entries(drift.data?.[skill.name] ?? {}).map(([target, status]) => (
-                  <li key={target} className="flex justify-between text-sm">
+                  <li key={target} className="flex justify-between items-center text-sm">
                     <span className="capitalize">{target}</span>
-                    <DriftBadge status={status} />
+                    <div className="flex items-center gap-3">
+                      <DriftBadge status={status} />
+                      {status === "drifted-target-newer" && (
+                        <button
+                          className="text-xs underline text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Replace your source copy of ${skill.name} with the version from ${target}? The old source goes to Trash.`
+                              )
+                            ) {
+                              pullBack.mutate({ skill: skill.name, target });
+                            }
+                          }}
+                        >
+                          Pull back
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

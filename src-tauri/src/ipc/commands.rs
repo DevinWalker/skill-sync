@@ -170,3 +170,36 @@ pub fn cmd_execute_sync(plan: SyncPlan) -> Result<(), String> {
     // TODO: append_event when audit lands (Task 30)
     Ok(())
 }
+
+#[tauri::command]
+pub fn cmd_pull_back(skill: String, target: String) -> Result<(), String> {
+    let (_paths, settings, ownership, targets) = gather_inputs()?;
+    let entry = ownership
+        .skills
+        .get(&skill)
+        .ok_or("skill not tagged")?;
+    if entry.class != OwnershipClass::Mine {
+        return Err("only Mine skills can be pulled back".into());
+    }
+    let src = entry
+        .source_path
+        .clone()
+        .unwrap_or_else(|| settings.source_root.join(&skill));
+    let install = targets
+        .targets
+        .get(&target)
+        .and_then(|t| t.install_path.clone())
+        .ok_or("unknown target")?;
+    let dest = install.join(&skill);
+    let home = dirs::home_dir().ok_or("no home")?;
+    let paths_for_archive = Paths::for_home(home);
+    let label = format!("pullback-{target}-{skill}");
+    crate::sync::pull_back(
+        &src,
+        &dest,
+        &crate::trash::TrashAction,
+        &paths_for_archive.trash_archive_root(),
+        &label,
+    )
+    .map_err(|e| e.to_string())
+}
