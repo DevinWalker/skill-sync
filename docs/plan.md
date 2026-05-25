@@ -782,7 +782,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct Health {
     pub ok: bool,
     pub version: String,
@@ -1029,7 +1029,7 @@ use std::path::PathBuf;
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct Settings {
     pub version: u32,
     pub source_root: PathBuf,
@@ -1064,12 +1064,12 @@ use std::path::PathBuf;
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 #[serde(rename_all = "lowercase")]
 pub enum OwnershipClass { Mine, External, Ignore }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct OwnershipEntry {
     pub class: OwnershipClass,
     pub source_path: Option<PathBuf>,
@@ -1078,7 +1078,7 @@ pub struct OwnershipEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct OwnershipFile {
     pub version: u32,
     pub skills: BTreeMap<String, OwnershipEntry>,
@@ -1094,19 +1094,19 @@ use std::path::PathBuf;
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 #[serde(rename_all = "kebab-case")]
 pub enum TargetKind { DirectoryMirror, PackageOnly }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct Target {
     pub install_path: Option<PathBuf>,
     pub kind: TargetKind,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct TargetsFile {
     pub version: u32,
     pub targets: BTreeMap<String, Target>,
@@ -1253,7 +1253,7 @@ use std::path::{Path, PathBuf};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct CandidateLocation {
     pub dir_name: String,
     pub path: PathBuf,
@@ -1400,11 +1400,11 @@ use crate::discovery::CandidateLocation;
 use crate::paths::Paths;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub enum Class { ToolBuiltin, Bundle, MineHeuristic, Unknown }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub enum Signal {
     CodexSystemPath, CursorBuiltinPath, ClaudePluginPath,
     AgentsRoot, ExternalBundleRoot, SymlinkIntoBundle,
@@ -1412,7 +1412,7 @@ pub enum Signal {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct Provenance { pub class: Class, pub signals: Vec<Signal> }
 
 fn under(p: &Path, root: &Path) -> bool { p.starts_with(root) }
@@ -1637,7 +1637,7 @@ use crate::{discovery::{discover_in_root, CandidateLocation}, frontmatter::parse
             paths::Paths, provenance::{classify, Class, Provenance}, identity::content_hash};
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct LocationView {
     pub path: PathBuf,
     pub real_path: PathBuf,
@@ -1647,7 +1647,7 @@ pub struct LocationView {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct SkillView {
     pub name: String,
     pub description: Option<String>,
@@ -2333,11 +2333,11 @@ use std::path::PathBuf;
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub enum PlanAction { Create, Update, Skip, Refuse }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct PlanRow {
     pub skill: String,
     pub target: String,
@@ -2348,7 +2348,7 @@ pub struct PlanRow {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct SyncPlan { pub rows: Vec<PlanRow> }
 ```
 
@@ -2895,7 +2895,7 @@ use std::path::Path;
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Copy, Serialize, TS, PartialEq, Eq)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 #[serde(rename_all = "kebab-case")]
 pub enum DriftStatus {
     InSync, DriftedTargetNewer, DriftedSourceNewer,
@@ -3752,7 +3752,7 @@ use std::io::{BufRead, BufReader, Write};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../src/types/bindings.ts")]
+#[ts(export, export_to = "../../src/types/bindings.ts")]
 pub struct AuditEntry {
     pub ts: chrono::DateTime<chrono::Utc>,
     pub kind: String,
