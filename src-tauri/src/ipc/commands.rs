@@ -209,6 +209,25 @@ pub fn cmd_build_package(skill: String) -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
+pub fn cmd_get_settings() -> Result<Settings, String> {
+    let home = dirs::home_dir().ok_or("no home")?;
+    let paths = Paths::for_home(home.clone());
+    load_or_init(
+        &paths.config_dir().join("settings.json"),
+        Settings::defaults(&home),
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn cmd_set_settings(settings: Settings) -> Result<(), String> {
+    let home = dirs::home_dir().ok_or("no home")?;
+    let paths = Paths::for_home(home);
+    crate::config::save(&paths.config_dir().join("settings.json"), &settings)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn cmd_pull_back(skill: String, target: String) -> Result<(), String> {
     let (_paths, settings, ownership, targets) = gather_inputs()?;
     let entry = ownership

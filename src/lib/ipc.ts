@@ -5,6 +5,7 @@ import type {
   OwnershipClass,
   SyncPlan,
   DriftStatus,
+  Settings,
 } from "@/types/bindings";
 
 export const ipc = {
@@ -21,4 +22,7 @@ export const ipc = {
   buildPackage: (skill: string) => invoke<string>("cmd_build_package", { skill }),
   testTargetWrite: (installPath: string) =>
     invoke<void>("cmd_test_target_write", { installPath }),
+  getSettings: () => invoke<Settings>("cmd_get_settings"),
+  setSettings: (settings: Settings) =>
+    invoke<void>("cmd_set_settings", { settings }),
 };
