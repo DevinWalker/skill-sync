@@ -1,136 +1,196 @@
+import { useMemo, useState } from "react";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
+import { useSettings } from "@/hooks/use-settings";
 import { useUIState } from "@/store/ui-state";
 import { OwnerBadge } from "./owner-badge";
-import { DriftBadge } from "./drift-badge";
-import type { DriftStatus, SkillView } from "@/types/bindings";
+import { OwnershipPicker } from "./ownership-picker";
+import { DriftBar } from "./drift-bar";
+import type { DriftStatus, OwnershipClass, SkillView } from "@/types/bindings";
 
-const TARGETS = ["claude", "codex", "cursor"] as const;
-const TARGET_GLYPH: Record<(typeof TARGETS)[number], string> = {
-  claude: "CL",
-  codex:  "CX",
-  cursor: "CR",
-};
-
-function entryNumber(i: number) {
-  return String(i + 1).padStart(3, "0");
+interface Props {
+  filter?: string;
+  ownershipFilter?: "all" | "mine" | "bundle" | "builtin" | "unknown";
 }
 
-function firstLocationPath(skill: SkillView): string {
-  return String(skill.locations[0]?.path ?? "—");
+function firstPath(skill: SkillView): string {
+  return String(skill.locations[0]?.path ?? "—").replace(/^.*\/Users\/[^/]+/, "~");
 }
 
-function firstLocationHash(skill: SkillView): string {
-  return skill.locations[0]?.hash?.slice(0, 8) ?? "—";
-}
-
-export function LibraryTable() {
+export function LibraryTable({
+  filter = "",
+  ownershipFilter = "all",
+}: Props) {
   const skills = useSkills();
   const { data: ownership } = useOwnership();
   const drift = useDrift();
+  const { data: settings } = useSettings();
   const selectSkill = useUIState((s) => s.selectSkill);
+  const selectedSkill = useUIState((s) => s.selectedSkill);
+
+  const enabledTargets = useMemo(
+    () => new Set(settings?.enabled_targets ?? []),
+    [settings?.enabled_targets]
+  );
+
+  const rows = useMemo(() => {
+    const all = skills.data ?? [];
+    const f = filter.trim().toLowerCase();
+    const regex = /^\/(.+)\/$/.exec(filter);
+    const matcher = (s: SkillView) => {
+      if (!f) return true;
+      if (regex) {
+        try { return new RegExp(regex[1], "i").test(s.name); } catch { return false; }
+      }
+      return s.name.toLowerCase().includes(f);
+    };
+    const ownershipMatches = (s: SkillView) => {
+      const confirmed = ownership?.skills?.[s.name]?.class === "mine";
+      switch (ownershipFilter) {
+        case "all":     return true;
+        case "mine":    return s.class === "MineHeuristic" || confirmed;
+        case "bundle":  return s.class === "Bundle";
+        case "builtin": return s.class === "ToolBuiltin";
+        case "unknown": return s.class === "Unknown";
+      }
+    };
+    return all.filter((s) => matcher(s) && ownershipMatches(s));
+  }, [skills.data, filter, ownershipFilter, ownership]);
 
   if (skills.isLoading) {
-    return (
-      <div className="px-12 py-16 eyebrow text-muted-foreground">Scanning the archive…</div>
-    );
+    return <div className="px-8 py-12 eyebrow">Scanning…</div>;
   }
   if (skills.error) {
-    return (
-      <div className="px-12 py-16 text-danger font-mono text-xs">{String(skills.error)}</div>
-    );
+    return <div className="px-8 py-12 font-mono text-xs text-destructive">{String(skills.error)}</div>;
   }
-  if (!skills.data) return null;
 
   return (
-    <div>
-      {/* Column header — letterpressed eyebrow row */}
-      <div className="grid grid-cols-[3rem_1fr_auto_auto] gap-x-8 px-12 pb-3 border-b border-border">
-        <div className="eyebrow">№</div>
-        <div className="eyebrow">Entry · Provenance</div>
-        <div className="eyebrow text-right">Targets</div>
-        <div className="eyebrow text-right pr-1">Hash</div>
+    <div className="px-8 pb-12">
+      <div className="border border-border rounded-lg bg-card overflow-hidden">
+        <div className="grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
+          <div className="eyebrow">Skill</div>
+          <div className="eyebrow">Owner</div>
+          <div className="eyebrow">Targets</div>
+          <div className="eyebrow">Updated</div>
+          <div className="eyebrow text-right">Size</div>
+          <div className="eyebrow"></div>
+        </div>
+        <ul>
+          {rows.map((s, i) => {
+            const ownershipEntry = ownership?.skills?.[s.name];
+            const confirmed = ownershipEntry?.class === "mine";
+            const driftRow = (drift.data?.[s.name] ?? {}) as Partial<Record<string, DriftStatus>>;
+            const isSelected = selectedSkill === s.name;
+            return (
+              <SkillRow
+                key={s.name}
+                index={i}
+                skill={s}
+                confirmed={confirmed}
+                currentOwnership={ownershipEntry?.class}
+                drift={driftRow}
+                enabled={enabledTargets}
+                isSelected={isSelected}
+                onSelect={() => selectSkill(s.name)}
+              />
+            );
+          })}
+        </ul>
       </div>
-
-      <ul>
-        {skills.data.map((s, i) => {
-          const confirmed = ownership?.skills?.[s.name]?.class === "mine";
-          const row = (drift.data?.[s.name] ?? {}) as Partial<Record<string, DriftStatus>>;
-          return (
-            <li
-              key={s.name}
-              className="archive-rise group border-b border-border last:border-b-0"
-              style={{ animationDelay: `${Math.min(i * 28, 360)}ms` }}
-            >
-              <button
-                onClick={() => selectSkill(s.name)}
-                className="w-full text-left grid grid-cols-[3rem_1fr_auto_auto] gap-x-8 items-baseline px-12 py-5 transition-colors hover:bg-secondary/50 focus:outline-none focus-visible:bg-secondary/60"
-              >
-                {/* Index */}
-                <div className="font-mono text-[11px] text-muted-foreground/70 pt-2">
-                  {entryNumber(i)}
-                </div>
-
-                {/* Title + provenance + path */}
-                <div className="min-w-0">
-                  <div className="flex items-baseline gap-3">
-                    <h3
-                      className="font-display text-[24px] leading-tight tracking-tight truncate"
-                      style={{ fontVariationSettings: '"SOFT" 30, "opsz" 144' }}
-                    >
-                      {s.name}
-                    </h3>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-3 flex-wrap">
-                    <OwnerBadge klass={s.class} confirmed={confirmed} />
-                    <span className="text-muted-foreground/40 font-mono text-[10px]">·</span>
-                    <span className="font-mono text-[11px] text-muted-foreground truncate">
-                      {firstLocationPath(s)}
-                    </span>
-                    {s.locations.length > 1 && (
-                      <span className="font-mono text-[10px] text-muted-foreground/70">
-                        +{s.locations.length - 1}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Target glyphs */}
-                <div className="flex items-center gap-3">
-                  {TARGETS.map((t) => {
-                    const status = row[t];
-                    return (
-                      <div key={t} className="flex flex-col items-center min-w-[44px]">
-                        <span
-                          className={
-                            "font-mono text-[10px] uppercase tracking-widest mb-1.5 " +
-                            (status ? "text-foreground" : "text-muted-foreground/40")
-                          }
-                        >
-                          {TARGET_GLYPH[t]}
-                        </span>
-                        {status ? (
-                          <DriftBadge status={status} />
-                        ) : (
-                          <span className="font-mono text-[10px] text-muted-foreground/40">—</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Hash */}
-                <div className="text-right pr-1">
-                  <div className="font-mono text-[11px] text-muted-foreground">
-                    {firstLocationHash(s)}
-                  </div>
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }
+
+function SkillRow({
+  index,
+  skill,
+  confirmed,
+  currentOwnership,
+  drift,
+  enabled,
+  isSelected,
+  onSelect,
+}: {
+  index: number;
+  skill: SkillView;
+  confirmed: boolean;
+  currentOwnership: OwnershipClass | undefined;
+  drift: Partial<Record<string, DriftStatus>>;
+  enabled: Set<string>;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const [classifyOpen, setClassifyOpen] = useState(false);
+  const isUnknown = skill.class === "Unknown";
+  const sizeKb = (sumFileSize(skill) / 1024).toFixed(1);
+
+  return (
+    <li
+      className="border-b border-border last:border-b-0 console-rise"
+      style={{ animationDelay: `${Math.min(index * 28, 720)}ms` }}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect()}
+        className="grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
+        style={isSelected ? { boxShadow: "inset 2px 0 0 var(--primary)" } : undefined}
+      >
+        <div className="min-w-0">
+          <div className="text-foreground font-medium text-sm truncate">{skill.name}</div>
+          <div className="font-mono text-[11px] text-fg-faint truncate">
+            {firstPath(skill)} · {skill.locations.length} location{skill.locations.length === 1 ? "" : "s"}
+          </div>
+        </div>
+        <div>
+          <OwnerBadge klass={skill.class} confirmed={confirmed} />
+        </div>
+        <div>
+          <DriftBar
+            byTarget={drift as Partial<Record<"claude" | "codex" | "cursor" | "cowork", DriftStatus | undefined>>}
+            enabled={enabled}
+          />
+        </div>
+        <div className="font-mono text-[11.5px] text-muted-foreground">—</div>
+        <div className="font-mono text-[11.5px] text-fg-dim text-right">{sizeKb} kB</div>
+        <div
+          data-open={classifyOpen}
+          className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 data-[open=true]:opacity-100 transition-opacity"
+        >
+          {isUnknown ? (
+            <button
+              className="font-mono text-[10.5px] px-2 py-1 rounded border border-primary bg-primary text-primary-foreground"
+              onClick={(e) => { e.stopPropagation(); setClassifyOpen((v) => !v); }}
+            >
+              {classifyOpen ? "close" : "classify"}
+            </button>
+          ) : (
+            <button
+              className="font-mono text-[10.5px] px-2 py-1 rounded border border-border bg-card text-muted-foreground"
+              onClick={(e) => { e.stopPropagation(); onSelect(); }}
+            >
+              open
+            </button>
+          )}
+        </div>
+      </div>
+      {classifyOpen && (
+        <div className="px-3.5 pb-3">
+          <OwnershipPicker
+            name={skill.name}
+            current={currentOwnership}
+          />
+        </div>
+      )}
+    </li>
+  );
+}
+
+function sumFileSize(_skill: SkillView): number {
+  // The current SkillView doesn't carry a size field. Estimate from location hash presence
+  // and file count proxy; replaced when bindings expose size. For now, return 0.
+  return 0;
+}
+

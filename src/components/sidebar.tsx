@@ -1,67 +1,92 @@
 import { NavLink } from "react-router-dom";
+import { LayoutGrid, Boxes, Clock, Package } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
+import { useSkills } from "@/hooks/use-skills";
 import { cn } from "@/lib/utils";
 
-const items = [
-  { to: "/",         label: "Library",  num: "i"  },
-  { to: "/targets",  label: "Targets",  num: "ii" },
-  { to: "/activity", label: "Activity", num: "iii" },
-  { to: "/settings", label: "Settings", num: "iv"  },
-];
+const BUILD_SHA = import.meta.env.VITE_BUILD_SHA as string;
+
+const ITEMS = [
+  { to: "/",         label: "Library",  Icon: LayoutGrid },
+  { to: "/targets",  label: "Targets",  Icon: Boxes },
+  { to: "/activity", label: "Activity", Icon: Clock },
+  { to: "/settings", label: "Settings", Icon: Package }, // Settings as last; Packages is a future view
+] as const;
+
+const ALL_TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
 export function Sidebar() {
-  return (
-    <nav className="w-[228px] border-r border-border h-full flex flex-col bg-card">
-      {/* Brand mark */}
-      <div className="p-6 pb-7 border-b border-border">
-        <div className="eyebrow mb-3">№ 001 · Archive</div>
-        <div className="font-display text-[28px] leading-[0.95] tracking-tight">
-          Skill
-          <br />
-          <span className="italic font-light" style={{ fontVariationSettings: '"SOFT" 100, "opsz" 144' }}>
-            Sync
-          </span>
-        </div>
-        <div className="eyebrow mt-3 text-[9.5px]">A provenance archive</div>
-      </div>
+  const { data: settings } = useSettings();
+  const skills = useSkills();
+  const sourceRoot = settings?.source_root ?? "—";
+  const enabled = new Set(settings?.enabled_targets ?? []);
+  const skillCount = skills.data?.length ?? 0;
 
-      {/* Nav */}
-      <div className="px-4 pt-6 flex-1 space-y-px">
-        {items.map((i) => (
+  return (
+    <nav className="w-[220px] shrink-0 border-r border-border h-full flex flex-col bg-background">
+      <div className="px-3 pt-4 pb-2">
+        <div className="eyebrow px-2.5 pb-1.5">Workspace</div>
+        {ITEMS.map((item) => (
           <NavLink
-            key={i.to}
-            to={i.to}
-            end={i.to === "/"}
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
             className={({ isActive }) =>
               cn(
-                "group relative flex items-baseline gap-3 px-2 py-2.5 transition-colors",
-                isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                "group flex items-center justify-between px-2.5 py-[7px] rounded-md text-sm transition-colors",
+                isActive
+                  ? "bg-card text-foreground ring-1 ring-border-strong"
+                  : "text-muted-foreground hover:bg-bg-hover hover:text-foreground"
               )
             }
           >
             {({ isActive }) => (
               <>
-                <span
-                  className={cn(
-                    "font-mono text-[10px] uppercase tracking-widest w-5 shrink-0 pt-0.5",
-                    isActive ? "text-primary" : "text-muted-foreground/70"
-                  )}
-                >
-                  {i.num}.
+                <span className="inline-flex items-center gap-2.5">
+                  <item.Icon className="w-3.5 h-3.5" />
+                  <span>{item.label}</span>
                 </span>
-                <span className="font-display text-[17px] tracking-tight">{i.label}</span>
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-px bg-primary" />
-                )}
+                <span className={cn("font-mono text-[10.5px]", isActive ? "text-primary" : "text-fg-faint")}>
+                  {item.label === "Library" ? skillCount : ""}
+                </span>
               </>
             )}
           </NavLink>
         ))}
       </div>
 
-      {/* Footer mark */}
-      <div className="p-6 border-t border-border">
-        <div className="eyebrow text-[9px] mb-1">Curator</div>
-        <div className="font-mono text-[11px] text-muted-foreground">~/skill-sync</div>
+      <div className="px-3 pt-4 pb-2">
+        <div className="eyebrow px-2.5 pb-1.5">Source</div>
+        <div className="px-2.5 py-1 font-mono text-[11.5px] text-muted-foreground truncate" title={sourceRoot}>
+          {sourceRoot.replace(/^.*\/Users\/[^/]+/, "~")}
+        </div>
+        <NavLink to="/settings" className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground">
+          + change source
+        </NavLink>
+      </div>
+
+      <div className="px-3 pt-4 pb-2">
+        <div className="eyebrow px-2.5 pb-1.5">Targets</div>
+        {ALL_TARGETS.map((t) => (
+          <NavLink
+            key={t}
+            to="/targets"
+            className="flex items-center justify-between px-2.5 py-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <span className="capitalize">{t === "cowork" ? "Cowork (zip)" : t === "claude" ? "Claude Code" : t}</span>
+            <span className={cn("font-mono text-[10.5px]", enabled.has(t) ? "text-primary" : "text-fg-faint")}>
+              {enabled.has(t) ? "●" : "○"}
+            </span>
+          </NavLink>
+        ))}
+      </div>
+
+      <div className="mt-auto px-3 pt-3 pb-4 border-t border-dashed border-border">
+        <div className="px-2.5 font-mono text-[10.5px] text-fg-faint leading-relaxed">
+          <div className="flex justify-between"><span>last sync</span><span className="text-muted-foreground">—</span></div>
+          <div className="flex justify-between"><span>archive</span><span className="text-muted-foreground">~/.Trash</span></div>
+          <div className="flex justify-between"><span>build</span><span className="text-muted-foreground">{BUILD_SHA}</span></div>
+        </div>
       </div>
     </nav>
   );
