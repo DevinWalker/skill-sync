@@ -11,6 +11,7 @@ use crate::{
     sync::{plan, Input, SyncPlan},
 };
 use std::collections::BTreeMap;
+use std::io::Write as IoWrite;
 use std::path::PathBuf;
 
 #[tauri::command]
@@ -169,6 +170,19 @@ pub fn cmd_execute_sync(plan: SyncPlan) -> Result<(), String> {
     crate::sync::execute(&plan, &crate::trash::TrashAction, &paths.trash_archive_root())
         .map_err(|e| e.to_string())?;
     // TODO: append_event when audit lands (Task 30)
+    Ok(())
+}
+
+#[tauri::command]
+pub fn cmd_test_target_write(install_path: PathBuf) -> Result<(), String> {
+    if !install_path.exists() {
+        return Err("path does not exist".into());
+    }
+    let probe = install_path.join(".skill-sync-write-probe");
+    let mut f = std::fs::File::create(&probe).map_err(|e| e.to_string())?;
+    f.write_all(b"ok").map_err(|e| e.to_string())?;
+    f.sync_all().map_err(|e| e.to_string())?;
+    std::fs::remove_file(&probe).map_err(|e| e.to_string())?;
     Ok(())
 }
 

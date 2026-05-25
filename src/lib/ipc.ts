@@ -19,4 +19,6 @@ export const ipc = {
   pullBack: (skill: string, target: string) =>
     invoke<void>("cmd_pull_back", { skill, target }),
   buildPackage: (skill: string) => invoke<string>("cmd_build_package", { skill }),
+  testTargetWrite: (installPath: string) =>
+    invoke<void>("cmd_test_target_write", { installPath }),
 };
