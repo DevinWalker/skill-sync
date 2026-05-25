@@ -4,6 +4,7 @@ import { ipc } from "@/lib/ipc";
 import { applyTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Settings } from "@/types/bindings";
+import packageJson from "../../package.json";
 
 const TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
@@ -122,7 +123,7 @@ export function SettingsForm() {
       <Section title="Diagnostics">
         <Row label="Build" hint="Git short-sha and app version.">
           <span className="font-mono text-[12px] text-muted-foreground">
-            v0.1.0 · {import.meta.env.VITE_BUILD_SHA as string}
+            v{packageJson.version} · {import.meta.env.VITE_BUILD_SHA as string}
           </span>
         </Row>
         <Row label="Config directory" hint="Settings, ownership, targets, and audit log live here.">

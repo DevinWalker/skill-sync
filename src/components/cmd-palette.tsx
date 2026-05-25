@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 
 const SHORTCUTS = [
@@ -16,6 +16,7 @@ export function CmdPalette({ open, onOpenChange }: { open: boolean; onOpenChange
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0">
+        <DialogTitle className="sr-only">Command palette</DialogTitle>
         <div className="px-5 py-4 border-b border-border">
           <div className="eyebrow">Command palette · coming soon</div>
           <div className="mt-1 text-sm text-muted-foreground">

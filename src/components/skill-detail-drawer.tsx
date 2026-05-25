@@ -1,4 +1,4 @@
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { OwnerBadge } from "./owner-badge";
 import { DriftBadge } from "./drift-badge";
 import { useUIState } from "@/store/ui-state";
@@ -42,6 +42,7 @@ export function SkillDetailDrawer() {
   return (
     <Sheet open={!!selected} onOpenChange={(v) => !v && close(null)}>
       <SheetContent side="right" className="overflow-y-auto p-0">
+        <SheetTitle className="sr-only">{skill.name}</SheetTitle>
         <div className="px-6 py-5 border-b border-border">
           <div className="eyebrow mb-2">Skill detail</div>
           <h2 className="font-display text-xl text-foreground leading-tight">{skill.name}</h2>

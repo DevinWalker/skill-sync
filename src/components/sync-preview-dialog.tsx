@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Kbd } from "@/components/ui/kbd";
 import { useExecuteSync } from "@/hooks/use-sync";
@@ -31,6 +31,7 @@ export function SyncPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0">
+        <DialogTitle className="sr-only">Sync preview</DialogTitle>
         <header className="px-5 py-4 border-b border-border">
           <div className="eyebrow">Sync preview · ⌘P</div>
           <div className="mt-3 grid grid-cols-4 gap-4">

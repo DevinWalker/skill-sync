@@ -60,7 +60,7 @@ export function Sidebar() {
         <div className="px-2.5 py-1 font-mono text-[11.5px] text-muted-foreground truncate" title={sourceRoot}>
           {sourceRoot.replace(/^.*\/Users\/[^/]+/, "~")}
         </div>
-        <NavLink to="/settings" className="px-2.5 py-1 block font-mono text-[11px] text-fg-faint hover:text-foreground">
+        <NavLink to="/settings" className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground">
           + change source
         </NavLink>
       </div>
