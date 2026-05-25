@@ -5,6 +5,7 @@ pub mod config;
 pub mod discovery;
 pub mod provenance;
 pub mod identity;
+pub mod aggregator;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]

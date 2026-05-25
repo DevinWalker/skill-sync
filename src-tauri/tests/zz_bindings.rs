@@ -11,6 +11,7 @@ use ts_rs::TS;
 use skill_sync::config::ownership::{OwnershipClass, OwnershipEntry, OwnershipFile};
 use skill_sync::config::settings::Settings;
 use skill_sync::config::targets::{Target, TargetKind, TargetsFile};
+use skill_sync::aggregator::{LocationView, SkillView};
 use skill_sync::discovery::CandidateLocation;
 use skill_sync::provenance::{Class, Provenance, Signal};
 use skill_sync::types::Health;
@@ -35,6 +36,8 @@ fn aggregate_bindings_ts() {
     out.push_str(&decl::<Class>());
     out.push_str(&decl::<Signal>());
     out.push_str(&decl::<Provenance>());
+    out.push_str(&decl::<LocationView>());
+    out.push_str(&decl::<SkillView>());
 
     let path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
