@@ -59,7 +59,7 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
         pendingG.current = window.setTimeout(clearPending, SEQUENCE_TIMEOUT_MS);
         return;
       }
-      if (pendingG.current !== null && !meta && !e.altKey) {
+      if (pendingG.current !== null && !meta && !e.altKey && !e.shiftKey) {
         clearPending();
         switch (e.key.toLowerCase()) {
           case "l": e.preventDefault(); navigate("/"); return;
