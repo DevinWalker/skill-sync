@@ -10,7 +10,9 @@ pub mod ipc;
 pub mod trash;
 pub mod sync;
 
-use ipc::commands::{cmd_get_ownership, cmd_list_skills, cmd_set_ownership};
+use ipc::commands::{
+    cmd_execute_sync, cmd_get_ownership, cmd_list_skills, cmd_plan_sync, cmd_set_ownership,
+};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -29,6 +31,8 @@ pub fn run() {
             cmd_list_skills,
             cmd_get_ownership,
             cmd_set_ownership,
+            cmd_plan_sync,
+            cmd_execute_sync,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
