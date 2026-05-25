@@ -6,9 +6,11 @@ use crate::{
         settings::Settings,
         targets::{Target, TargetKind, TargetsFile},
     },
+    drift::{status_for, DriftStatus},
     paths::Paths,
     sync::{plan, Input, SyncPlan},
 };
+use std::collections::BTreeMap;
 
 #[tauri::command]
 pub fn cmd_list_skills() -> Result<Vec<SkillView>, String> {
@@ -129,6 +131,34 @@ pub fn cmd_plan_sync() -> Result<SyncPlan, String> {
         mine_skills: &mine,
         targets: &target_list,
     }))
+}
+
+#[tauri::command]
+pub fn cmd_drift_matrix() -> Result<BTreeMap<String, BTreeMap<String, DriftStatus>>, String> {
+    let (_paths, settings, ownership, targets) = gather_inputs()?;
+    let mut out = BTreeMap::new();
+    for (name, entry) in ownership.skills.iter() {
+        if entry.class != OwnershipClass::Mine {
+            continue;
+        }
+        let src = entry
+            .source_path
+            .clone()
+            .unwrap_or_else(|| settings.source_root.join(name));
+        let mut per_target = BTreeMap::new();
+        for (tname, t) in targets.targets.iter() {
+            if !settings.enabled_targets.contains(tname) {
+                continue;
+            }
+            if let Some(install) = &t.install_path {
+                let dest = install.join(name);
+                let st = status_for(&src, &dest).unwrap_or(DriftStatus::MissingInTarget);
+                per_target.insert(tname.clone(), st);
+            }
+        }
+        out.insert(name.clone(), per_target);
+    }
+    Ok(out)
 }
 
 #[tauri::command]

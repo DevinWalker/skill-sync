@@ -14,6 +14,7 @@ use skill_sync::config::targets::{Target, TargetKind, TargetsFile};
 use skill_sync::aggregator::{LocationView, SkillView};
 use skill_sync::discovery::CandidateLocation;
 use skill_sync::provenance::{Class, Provenance, Signal};
+use skill_sync::drift::DriftStatus;
 use skill_sync::sync::{PlanAction, PlanRow, SyncPlan};
 use skill_sync::types::Health;
 
@@ -42,6 +43,7 @@ fn aggregate_bindings_ts() {
     out.push_str(&decl::<PlanAction>());
     out.push_str(&decl::<PlanRow>());
     out.push_str(&decl::<SyncPlan>());
+    out.push_str(&decl::<DriftStatus>());
 
     let path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")

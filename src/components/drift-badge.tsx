@@ -1,10 +1,4 @@
-export type DriftStatus =
-  | "in-sync"
-  | "drifted-target-newer"
-  | "drifted-source-newer"
-  | "missing-in-target"
-  | "unmanaged"
-  | "refused";
+import type { DriftStatus } from "@/types/bindings";
 
 const config: Record<DriftStatus, { label: string; tone: string }> = {
   "in-sync":              { label: "in sync",   tone: "text-success" },
