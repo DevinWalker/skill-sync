@@ -116,3 +116,58 @@ pub fn plan(input: &Input) -> SyncPlan {
     }
     SyncPlan { rows }
 }
+
+use crate::trash::MoveArchive;
+
+pub fn execute(
+    plan: &SyncPlan,
+    archiver: &dyn MoveArchive,
+    archive_root: &std::path::Path,
+) -> std::io::Result<()> {
+    for row in &plan.rows {
+        match row.action {
+            PlanAction::Refuse | PlanAction::Skip => continue,
+            PlanAction::Update => {
+                let label = format!("{}-{}", row.target, row.skill);
+                archiver.archive(&row.destination, archive_root, &label)?;
+                copy_dir(&row.source, &row.destination)?;
+            }
+            PlanAction::Create => copy_dir(&row.source, &row.destination)?,
+        }
+    }
+    Ok(())
+}
+
+fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::create_dir_all(dst)?;
+    for entry in walkdir::WalkDir::new(src)
+        .follow_links(false)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let rel = entry.path().strip_prefix(src).unwrap();
+        if rel.as_os_str().is_empty() {
+            continue;
+        }
+        let to = dst.join(rel);
+        let ft = entry.file_type();
+        if ft.is_symlink() {
+            let target = std::fs::read_link(entry.path())?;
+            if let Some(p) = to.parent() {
+                std::fs::create_dir_all(p)?;
+            }
+            std::os::unix::fs::symlink(&target, &to)?;
+        } else if ft.is_dir() {
+            std::fs::create_dir_all(&to)?;
+        } else if ft.is_file() {
+            if let Some(p) = to.parent() {
+                std::fs::create_dir_all(p)?;
+            }
+            std::fs::copy(entry.path(), &to)?;
+            let mode = entry.metadata()?.permissions().mode();
+            std::fs::set_permissions(&to, std::fs::Permissions::from_mode(mode))?;
+        }
+    }
+    Ok(())
+}

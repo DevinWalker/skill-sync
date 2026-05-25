@@ -1,5 +1,6 @@
 use skill_sync::paths::Paths;
-use skill_sync::sync::{plan, Input, PlanAction};
+use skill_sync::sync::{execute, plan, Input, PlanAction};
+use skill_sync::trash::MoveToDir;
 use std::fs;
 use tempfile::tempdir;
 
@@ -70,4 +71,51 @@ fn skips_when_hashes_match() {
     };
     let p = plan(&input);
     assert!(matches!(p.rows[0].action, PlanAction::Skip));
+}
+
+#[test]
+fn create_writes_full_tree() {
+    let home = tempdir().unwrap();
+    let paths = Paths::for_home(home.path().to_path_buf());
+    let src_root = home.path().join(".claude/skills");
+    fs::create_dir_all(&src_root).unwrap();
+    write_skill(&src_root, "alpha", "a");
+    let codex = home.path().join(".codex/skills");
+    fs::create_dir_all(&codex).unwrap();
+    let archive = home.path().join("archive");
+    let input = Input {
+        paths: &paths,
+        source_root: &src_root,
+        mine_skills: &[("alpha".into(), src_root.join("alpha"))],
+        targets: &[("codex".into(), codex.clone())],
+    };
+    let p = plan(&input);
+    execute(&p, &MoveToDir, &archive).unwrap();
+    assert!(codex.join("alpha/SKILL.md").exists());
+}
+
+#[test]
+fn update_archives_old_then_writes_new() {
+    let home = tempdir().unwrap();
+    let paths = Paths::for_home(home.path().to_path_buf());
+    let src_root = home.path().join(".claude/skills");
+    fs::create_dir_all(&src_root).unwrap();
+    write_skill(&src_root, "alpha", "new");
+    let codex = home.path().join(".codex/skills");
+    fs::create_dir_all(&codex).unwrap();
+    write_skill(&codex, "alpha", "old");
+    let archive = home.path().join("archive");
+    let input = Input {
+        paths: &paths,
+        source_root: &src_root,
+        mine_skills: &[("alpha".into(), src_root.join("alpha"))],
+        targets: &[("codex".into(), codex.clone())],
+    };
+    let p = plan(&input);
+    execute(&p, &MoveToDir, &archive).unwrap();
+    let body = fs::read_to_string(codex.join("alpha/SKILL.md")).unwrap();
+    assert!(body.contains("new"));
+    // archive root contains at least one stamped subdir
+    let mut entries = fs::read_dir(&archive).unwrap();
+    assert!(entries.next().is_some(), "archive root should contain a stamped dir");
 }
