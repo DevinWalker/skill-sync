@@ -18,3 +18,4 @@ export type PlanAction = "Create" | "Update" | "Skip" | "Refuse";
 export type PlanRow = { skill: string, target: string, action: PlanAction, source: string, destination: string, reason: string | null, };
 export type SyncPlan = { rows: Array<PlanRow>, };
 export type DriftStatus = "in-sync" | "drifted-target-newer" | "drifted-source-newer" | "missing-in-target" | "unmanaged" | "refused";
+export type AuditEntry = { ts: string, kind: string, data: any, };

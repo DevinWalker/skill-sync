@@ -1,5 +1,6 @@
 use crate::{
     aggregator::{list_skills, SkillView},
+    audit::AuditEntry,
     config::{
         known_bundles, load_or_init, save,
         ownership::{OwnershipClass, OwnershipEntry, OwnershipFile},
@@ -169,8 +170,12 @@ pub fn cmd_execute_sync(plan: SyncPlan) -> Result<(), String> {
     let paths = Paths::for_home(home);
     crate::sync::execute(&plan, &crate::trash::TrashAction, &paths.trash_archive_root())
         .map_err(|e| e.to_string())?;
-    // TODO: append_event when audit lands (Task 30)
     Ok(())
+}
+
+#[tauri::command]
+pub fn cmd_read_audit(limit: usize) -> Result<Vec<AuditEntry>, String> {
+    crate::audit::read_last(limit).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

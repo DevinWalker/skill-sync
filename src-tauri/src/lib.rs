@@ -11,11 +11,12 @@ pub mod trash;
 pub mod sync;
 pub mod drift;
 pub mod package;
+pub mod audit;
 
 use ipc::commands::{
     cmd_build_package, cmd_drift_matrix, cmd_execute_sync, cmd_get_ownership, cmd_get_settings,
-    cmd_list_skills, cmd_plan_sync, cmd_pull_back, cmd_set_ownership, cmd_set_settings,
-    cmd_test_target_write,
+    cmd_list_skills, cmd_plan_sync, cmd_pull_back, cmd_read_audit, cmd_set_ownership,
+    cmd_set_settings, cmd_test_target_write,
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -43,6 +44,7 @@ pub fn run() {
             cmd_test_target_write,
             cmd_get_settings,
             cmd_set_settings,
+            cmd_read_audit,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -6,6 +6,7 @@ import type {
   SyncPlan,
   DriftStatus,
   Settings,
+  AuditEntry,
 } from "@/types/bindings";
 
 export const ipc = {
@@ -25,4 +26,5 @@ export const ipc = {
   getSettings: () => invoke<Settings>("cmd_get_settings"),
   setSettings: (settings: Settings) =>
     invoke<void>("cmd_set_settings", { settings }),
+  readAudit: (limit: number) => invoke<AuditEntry[]>("cmd_read_audit", { limit }),
 };

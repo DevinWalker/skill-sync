@@ -33,5 +33,9 @@ pub fn build_skill_package(skill_name: &str, src: &Path, out_path: &Path) -> std
         }
     }
     zip.finish()?;
+    let _ = crate::audit::append_event(
+        "package.build",
+        serde_json::json!({ "skill": skill_name, "out": out_path }),
+    );
     Ok(())
 }

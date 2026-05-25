@@ -135,6 +135,10 @@ pub fn execute(
             PlanAction::Create => copy_dir(&row.source, &row.destination)?,
         }
     }
+    let _ = crate::audit::append_event(
+        "sync.execute",
+        serde_json::json!({ "rows": plan.rows.len() }),
+    );
     Ok(())
 }
 
@@ -164,6 +168,10 @@ pub fn pull_back(
         archiver.archive(source, archive_root, label)?;
     }
     copy_dir(dest, source)?;
+    let _ = crate::audit::append_event(
+        "sync.pull_back",
+        serde_json::json!({ "label": label }),
+    );
     Ok(())
 }
 

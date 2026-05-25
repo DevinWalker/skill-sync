@@ -8,6 +8,7 @@ use std::fs;
 use std::path::PathBuf;
 use ts_rs::TS;
 
+use skill_sync::audit::AuditEntry;
 use skill_sync::config::ownership::{OwnershipClass, OwnershipEntry, OwnershipFile};
 use skill_sync::config::settings::Settings;
 use skill_sync::config::targets::{Target, TargetKind, TargetsFile};
@@ -44,6 +45,7 @@ fn aggregate_bindings_ts() {
     out.push_str(&decl::<PlanRow>());
     out.push_str(&decl::<SyncPlan>());
     out.push_str(&decl::<DriftStatus>());
+    out.push_str(&decl::<AuditEntry>());
 
     let path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
