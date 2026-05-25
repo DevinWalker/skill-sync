@@ -1,0 +1,83 @@
+/* Warm-minimal palette. Maps shadcn token names (--background, --primary, …)
+   to warm oklch values, plus adds semantic tokens (--success/--warning/--danger).
+   Consumed by Tailwind via direct var(--…) refs in tailwind.config.ts. */
+:root {
+  /* surfaces */
+  --background: oklch(98% 0.005 80);
+  --foreground: oklch(22% 0.01 80);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(22% 0.01 80);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(22% 0.01 80);
+
+  /* primary action — terracotta accent */
+  --primary: oklch(64% 0.13 35);
+  --primary-foreground: oklch(98% 0.005 80);
+
+  /* secondary surface */
+  --secondary: oklch(95% 0.005 80);
+  --secondary-foreground: oklch(22% 0.01 80);
+
+  /* muted bg + text */
+  --muted: oklch(95% 0.005 80);
+  --muted-foreground: oklch(55% 0.01 80);
+
+  /* shadcn "accent" highlight surface */
+  --accent: oklch(95% 0.005 80);
+  --accent-foreground: oklch(22% 0.01 80);
+
+  /* destructive / danger */
+  --destructive: oklch(58% 0.18 25);
+  --destructive-foreground: oklch(98% 0.005 80);
+
+  /* borders + inputs + focus */
+  --border: oklch(22% 0.01 80 / 8%);
+  --input: oklch(22% 0.01 80 / 8%);
+  --ring: oklch(64% 0.13 35);
+
+  /* extra semantic tokens */
+  --success: oklch(62% 0.13 145);
+  --warning: oklch(72% 0.14 80);
+  --danger: oklch(58% 0.18 25);
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(18% 0.01 80);
+  --foreground: oklch(94% 0.005 80);
+  --card: oklch(22% 0.01 80);
+  --card-foreground: oklch(94% 0.005 80);
+  --popover: oklch(22% 0.01 80);
+  --popover-foreground: oklch(94% 0.005 80);
+
+  --primary: oklch(70% 0.12 35);
+  --primary-foreground: oklch(18% 0.01 80);
+
+  --secondary: oklch(26% 0.01 80);
+  --secondary-foreground: oklch(94% 0.005 80);
+
+  --muted: oklch(26% 0.01 80);
+  --muted-foreground: oklch(65% 0.01 80);
+
+  --accent: oklch(26% 0.01 80);
+  --accent-foreground: oklch(94% 0.005 80);
+
+  --destructive: oklch(66% 0.18 25);
+  --destructive-foreground: oklch(98% 0.005 80);
+
+  --border: oklch(94% 0.005 80 / 10%);
+  --input: oklch(94% 0.005 80 / 10%);
+  --ring: oklch(70% 0.12 35);
+
+  --success: oklch(70% 0.13 145);
+  --warning: oklch(78% 0.14 80);
+  --danger: oklch(66% 0.18 25);
+}
+
+html, body { background: var(--background); color: var(--foreground); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 15px;
+}
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
