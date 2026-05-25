@@ -9,3 +9,6 @@ export type TargetKind = "directory-mirror" | "package-only";
 export type Target = { install_path: string | null, kind: TargetKind, };
 export type TargetsFile = { version: number, targets: { [key: string]: Target }, };
 export type CandidateLocation = { dir_name: string, path: string, real_path: string, is_symlink: boolean, };
+export type Class = "ToolBuiltin" | "Bundle" | "MineHeuristic" | "Unknown";
+export type Signal = "CodexSystemPath" | "CursorBuiltinPath" | "ClaudePluginPath" | "AgentsRoot" | "ExternalBundleRoot" | "SymlinkIntoBundle" | "KnownBundleName" | "FreshUserDir";
+export type Provenance = { class: Class, signals: Array<Signal>, };

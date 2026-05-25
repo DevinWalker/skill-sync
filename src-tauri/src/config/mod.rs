@@ -1,6 +1,7 @@
 pub mod settings;
 pub mod ownership;
 pub mod targets;
+pub mod known_bundles;
 
 use std::path::Path;
 use std::io::Write;
