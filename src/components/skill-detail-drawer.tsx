@@ -1,17 +1,24 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { OwnerBadge } from "./owner-badge";
+import { DriftBadge } from "./drift-badge";
 import { useUIState } from "@/store/ui-state";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { usePullBack } from "@/hooks/use-sync";
-import { OwnershipPicker } from "./ownership-picker";
-import { OwnerBadge } from "./owner-badge";
-import { DriftBadge } from "./drift-badge";
-import { ipc } from "@/lib/ipc";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import type { DriftStatus, LocationView } from "@/types/bindings";
 
-function EyebrowRule({ children }: { children: React.ReactNode }) {
+const PRETTY_TARGET: Record<string, string> = {
+  claude: "Claude Code",
+  codex:  "Codex",
+  cursor: "Cursor",
+  cowork: "Cowork (zip)",
+};
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 mb-3">
+    <div className="flex items-center gap-3 mb-3 mt-6 first:mt-0">
       <span className="eyebrow whitespace-nowrap">{children}</span>
       <span className="flex-1 h-px bg-border" />
     </div>
@@ -26,126 +33,80 @@ export function SkillDetailDrawer() {
   const drift = useDrift();
   const pullBack = usePullBack();
   const skill = skills.data?.find((s) => s.name === selected) ?? null;
-  const confirmed = !!skill && ownership.data?.skills?.[skill.name]?.class === "mine";
+  if (!skill) return <Sheet open={false} onOpenChange={(v) => !v && close(null)}><SheetContent side="right" /></Sheet>;
+
+  const confirmed = ownership.data?.skills?.[skill.name]?.class === "mine";
+  const driftRow = (drift.data?.[skill.name] ?? {}) as Partial<Record<string, DriftStatus>>;
+  const primaryLoc: LocationView | undefined = skill.locations[0];
 
   return (
     <Sheet open={!!selected} onOpenChange={(v) => !v && close(null)}>
-      <SheetContent
-        side="right"
-        className="w-[520px] sm:max-w-[520px] overflow-y-auto bg-card p-0 border-l border-border"
-      >
-        {skill && (
-          <article className="px-9 py-10">
-            {/* Eyebrow */}
-            <div className="flex items-baseline justify-between mb-6">
-              <div className="eyebrow">·  Specimen Card  ·</div>
-              <OwnerBadge klass={skill.class} confirmed={confirmed} />
-            </div>
+      <SheetContent side="right" className="overflow-y-auto p-0">
+        <div className="px-6 py-5 border-b border-border">
+          <div className="eyebrow mb-2">Skill detail</div>
+          <h2 className="font-display text-xl text-foreground leading-tight">{skill.name}</h2>
+          <div className="mt-1 font-mono text-[11.5px] text-fg-dim truncate" title={primaryLoc?.path}>
+            {primaryLoc?.path.replace(/^.*\/Users\/[^/]+/, "~") ?? "—"}
+          </div>
+        </div>
 
-            {/* Title */}
-            <h2
-              className="font-display text-[40px] leading-[1.02] tracking-tight"
-              style={{ fontVariationSettings: '"SOFT" 50, "opsz" 144' }}
+        <div className="px-6 py-5">
+          <SectionLabel>Meta</SectionLabel>
+          <dl className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-2 font-mono text-[12px]">
+            <dt className="text-fg-dim">class</dt>
+            <dd className="text-foreground"><OwnerBadge klass={skill.class} confirmed={confirmed} /></dd>
+            <dt className="text-fg-dim">locations</dt>
+            <dd className="text-foreground">{skill.locations.length}</dd>
+            <dt className="text-fg-dim">hash</dt>
+            <dd className="text-foreground">{primaryLoc?.hash.slice(0, 12) ?? "—"}</dd>
+            <dt className="text-fg-dim">symlink</dt>
+            <dd className="text-foreground">{primaryLoc?.is_symlink ? "yes" : "no"}</dd>
+          </dl>
+
+          <SectionLabel>Targets</SectionLabel>
+          <ul className="space-y-2">
+            {(["claude", "codex", "cursor", "cowork"] as const).map((t) => {
+              const status = t === "cowork" ? undefined : driftRow[t];
+              return (
+                <li key={t} className="grid grid-cols-[1fr_auto_auto] gap-3 items-center px-3 py-2.5 border border-border rounded-md bg-card">
+                  <div className="text-sm">{PRETTY_TARGET[t]}</div>
+                  <div>{status ? <DriftBadge status={status} /> : <span className="font-mono text-[10.5px] text-fg-dim">—</span>}</div>
+                  <div className="flex gap-1.5">
+                    {status === "drifted-target-newer" && (
+                      <button
+                        onClick={() => pullBack.mutate({ skill: skill.name, target: t })}
+                        className="font-mono text-[10.5px] px-2 py-1 rounded border border-border bg-card text-muted-foreground hover:bg-bg-hover"
+                      >
+                        pull
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <SectionLabel>Archive</SectionLabel>
+          <div className="font-mono text-[11.5px] text-muted-foreground leading-relaxed">
+            Overwrites are archived to <span className="text-foreground">~/.Trash/skill-sync-archive/&lt;ts&gt;/</span> before write. Recoverable via Finder.
+          </div>
+
+          <div className="mt-6 flex gap-2">
+            <button
+              onClick={() => primaryLoc && revealItemInDir(primaryLoc.path).catch(() => {})}
+              className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover"
             >
-              {skill.name}
-            </h2>
-            {skill.description && (
-              <p className="mt-3 font-body italic text-[15px] text-muted-foreground leading-snug">
-                {skill.description}
-              </p>
-            )}
-
-            {/* Rule */}
-            <div className="h-px bg-foreground/30 my-7" />
-
-            {/* Provenance */}
-            <section className="mb-8">
-              <EyebrowRule>I.  Provenance</EyebrowRule>
-              <OwnershipPicker
-                name={skill.name}
-                current={ownership.data?.skills?.[skill.name]?.class}
-              />
-            </section>
-
-            {/* Locations */}
-            <section className="mb-8">
-              <EyebrowRule>II.  Locations on record</EyebrowRule>
-              <ol className="space-y-3">
-                {skill.locations.map((l, i) => (
-                  <li key={String(l.path)} className="flex gap-4">
-                    <span className="font-mono text-[10px] text-muted-foreground/60 pt-0.5 w-6 shrink-0">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-mono text-[12px] break-all leading-snug">
-                        {String(l.path)}
-                      </div>
-                      <div className="mt-1 flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                        <span>hash {l.hash.slice(0, 10)}</span>
-                        {l.is_symlink && (
-                          <>
-                            <span className="text-muted-foreground/40">·</span>
-                            <span>symbolic link</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </section>
-
-            {/* Targets */}
-            <section className="mb-8">
-              <EyebrowRule>III.  Custody across targets</EyebrowRule>
-              <ul className="divide-y divide-border">
-                {Object.entries(drift.data?.[skill.name] ?? {}).map(([target, status]) => (
-                  <li key={target} className="py-2.5 flex items-center justify-between">
-                    <span className="font-display text-[17px] capitalize">{target}</span>
-                    <div className="flex items-center gap-4">
-                      <DriftBadge status={status} />
-                      {status === "drifted-target-newer" && (
-                        <button
-                          className="font-mono text-[10px] uppercase tracking-widest underline underline-offset-4 decoration-muted-foreground/40 hover:decoration-foreground hover:text-foreground text-muted-foreground transition-colors"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `Replace your source copy of ${skill.name} with the version from ${target}? The old source goes to Trash.`
-                              )
-                            ) {
-                              pullBack.mutate({ skill: skill.name, target });
-                            }
-                          }}
-                        >
-                          Pull back
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            {/* Actions */}
-            <section>
-              <EyebrowRule>IV.  Acts of preservation</EyebrowRule>
-              <button
-                onClick={async () => {
-                  try {
-                    const p = await ipc.buildPackage(skill.name);
-                    alert(`Built: ${p}`);
-                  } catch (e) {
-                    alert(`Failed: ${String(e)}`);
-                  }
-                }}
-                className="inline-flex items-center gap-3 border border-foreground/30 hover:border-primary hover:text-primary px-4 py-2 transition-colors"
-              >
-                <span className="font-mono text-[10px] uppercase tracking-widest">Build .skill</span>
-                <span className="text-[12px] leading-none">↓</span>
-              </button>
-            </section>
-          </article>
-        )}
+              Reveal in Finder
+            </button>
+            <button
+              disabled
+              title="Packaging not yet wired"
+              className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground opacity-50 cursor-not-allowed"
+            >
+              Build .skill
+            </button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );
