@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { usePlatform } from "@/hooks/use-platform";
 import { useSettings } from "@/hooks/use-settings";
+import { Mascot } from "./mascot";
 import packageJson from "../../package.json";
 
 const APP_VERSION = packageJson.version;
@@ -28,13 +29,9 @@ export function TitleBar() {
       }
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
-      <div className="font-mono text-[11px] tracking-[0.04em] text-muted-foreground flex items-center gap-1">
+      <div className="font-mono text-[11px] tracking-[0.04em] text-muted-foreground flex items-center gap-1.5">
+        <Mascot />
         <span>// SKILL.SYNC</span>
-        <span
-          aria-hidden
-          className="inline-block w-[7px] h-3 bg-primary motion-safe:animate-caret-blink ml-0.5"
-          style={{ boxShadow: "0 0 8px var(--accent-glow)" }}
-        />
       </div>
       <div className="flex-1" />
       <div
