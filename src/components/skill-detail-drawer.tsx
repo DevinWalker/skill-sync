@@ -6,6 +6,7 @@ import { useDrift } from "@/hooks/use-drift";
 import { usePullBack } from "@/hooks/use-sync";
 import { OwnershipPicker } from "./ownership-picker";
 import { DriftBadge } from "./drift-badge";
+import { ipc } from "@/lib/ipc";
 
 export function SkillDetailDrawer() {
   const selected = useUIState((s) => s.selectedSkill);
@@ -84,6 +85,22 @@ export function SkillDetailDrawer() {
                   </li>
                 ))}
               </ul>
+            </section>
+
+            <section className="mt-6">
+              <button
+                className="text-xs underline text-muted-foreground hover:text-foreground"
+                onClick={async () => {
+                  try {
+                    const p = await ipc.buildPackage(skill.name);
+                    alert(`Built: ${p}`);
+                  } catch (e) {
+                    alert(`Failed: ${String(e)}`);
+                  }
+                }}
+              >
+                Build .skill package
+              </button>
             </section>
           </>
         )}

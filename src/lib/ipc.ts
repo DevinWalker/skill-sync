@@ -18,4 +18,5 @@ export const ipc = {
     invoke<Record<string, Record<string, DriftStatus>>>("cmd_drift_matrix"),
   pullBack: (skill: string, target: string) =>
     invoke<void>("cmd_pull_back", { skill, target }),
+  buildPackage: (skill: string) => invoke<string>("cmd_build_package", { skill }),
 };

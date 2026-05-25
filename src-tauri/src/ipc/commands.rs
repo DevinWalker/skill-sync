@@ -11,6 +11,7 @@ use crate::{
     sync::{plan, Input, SyncPlan},
 };
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 
 #[tauri::command]
 pub fn cmd_list_skills() -> Result<Vec<SkillView>, String> {
@@ -169,6 +170,28 @@ pub fn cmd_execute_sync(plan: SyncPlan) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     // TODO: append_event when audit lands (Task 30)
     Ok(())
+}
+
+#[tauri::command]
+pub fn cmd_build_package(skill: String) -> Result<PathBuf, String> {
+    let (_paths, settings, ownership, _targets) = gather_inputs()?;
+    let entry = ownership
+        .skills
+        .get(&skill)
+        .ok_or("skill not tagged")?;
+    if entry.class != OwnershipClass::Mine {
+        return Err("only Mine skills can be packaged".into());
+    }
+    let src = entry
+        .source_path
+        .clone()
+        .unwrap_or_else(|| settings.source_root.join(&skill));
+    let stamp = chrono::Utc::now().format("%Y%m%d-%H%M");
+    let out = settings
+        .package_output_dir
+        .join(format!("{skill}-{stamp}.skill"));
+    crate::package::build_skill_package(&skill, &src, &out).map_err(|e| e.to_string())?;
+    Ok(out)
 }
 
 #[tauri::command]
