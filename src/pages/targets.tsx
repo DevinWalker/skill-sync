@@ -13,27 +13,22 @@ export function TargetsPage() {
     { name: "cursor", path: home ? `${home}/.cursor/skills` : undefined, kind: "directory-mirror" as const },
     { name: "cowork", path: undefined, kind: "package-only" as const },
   ];
+  const enabledCount = settings?.enabled_targets?.length ?? 0;
 
   return (
     <div className="console-rise">
-      <header className="px-12 pt-12 pb-10">
-        <div className="eyebrow mb-5">·  Custody  ·  Folio II</div>
-        <h1
-          className="font-display text-[64px] leading-[0.95] tracking-[-0.02em]"
-          style={{ fontVariationSettings: '"SOFT" 80, "opsz" 144' }}
-        >
-          The four <span className="italic font-light">cabinets</span>
-        </h1>
-        <p className="mt-6 font-body italic text-[17px] text-muted-foreground max-w-xl leading-snug">
-          Three local mirrors and one bundled archive. Test each before you ask the curator to sync.
-        </p>
-        <div className="mt-10 h-px bg-foreground/30" />
-      </header>
-
-      <div className="px-12 pb-12 grid grid-cols-2 gap-6">
-        {cards.map((t) => (
-          <TargetCard key={t.name} {...t} />
-        ))}
+      <div className="px-8 pt-7">
+        <div className="font-mono text-[11px] text-fg-faint flex items-center gap-1.5 mb-3">
+          <span>~</span><span>›</span><span className="text-muted-foreground">targets</span>
+        </div>
+        <h1 className="font-display text-2xl">Targets</h1>
+        <div className="font-mono text-xs text-fg-dim mt-1.5">
+          <span className="text-foreground">{cards.length}</span> cabinets ·{" "}
+          <span className="text-foreground">{enabledCount}</span> enabled · 3 directory mirrors · 1 package
+        </div>
+      </div>
+      <div className="px-8 mt-6 pb-12 grid grid-cols-2 gap-4">
+        {cards.map((t) => <TargetCard key={t.name} {...t} />)}
       </div>
     </div>
   );
