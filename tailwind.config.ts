@@ -76,7 +76,8 @@ const config: Config = {
       animation: {
         "console-rise": "console-rise 540ms cubic-bezier(.2,.7,.2,1) both",
         "console-pulse": "console-pulse 1.8s ease-out infinite",
-        "caret-blink": "caret-blink 1.05s steps(1) infinite",
+        "mascot-dance": "mascot-dance 5.4s cubic-bezier(.5,.1,.3,1) infinite",
+        "mascot-blink": "mascot-blink 5.4s ease-in-out infinite",
       },
     },
   },
