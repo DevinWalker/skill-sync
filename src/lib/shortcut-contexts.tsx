@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import type { ReactNode, RefObject } from "react";
 
 // — PrimarySearchContext ——————————————————————————————
@@ -33,26 +33,37 @@ export function usePrimarySearch(): PrimarySearchValue {
 
 // — PrimaryActionContext ——————————————————————————————
 // Pages register the handler for ⌘↵. Library: Sync mine. Others: no-op.
+//
+// Storage is ref-based: the registered fn and label live in refs, not state,
+// so the context value identity is stable across renders. A state-based
+// implementation triggered an infinite render loop — registering a new fn
+// changed the value identity, which re-ran consumer effects, which called
+// setAction again, ad infinitum.
 
 interface PrimaryActionValue {
   setAction: (fn: (() => void) | null, label?: string) => void;
   trigger: () => void;
-  label: string | null;
+  getLabel: () => string | null;
 }
 
 const PrimaryActionCtx = createContext<PrimaryActionValue | null>(null);
 
 export function PrimaryActionProvider({ children }: { children: ReactNode }) {
-  const [fn, setFn] = useState<(() => void) | null>(null);
-  const [label, setLabel] = useState<string | null>(null);
-  const setAction = useCallback((next: (() => void) | null, nextLabel?: string) => {
-    setFn(() => next);
-    setLabel(nextLabel ?? null);
-  }, []);
-  const trigger = useCallback(() => {
-    fn?.();
-  }, [fn]);
-  const value = useMemo(() => ({ setAction, trigger, label }), [setAction, trigger, label]);
+  const fnRef = useRef<(() => void) | null>(null);
+  const labelRef = useRef<string | null>(null);
+  const value = useMemo<PrimaryActionValue>(
+    () => ({
+      setAction: (next, nextLabel) => {
+        fnRef.current = next;
+        labelRef.current = nextLabel ?? null;
+      },
+      trigger: () => {
+        fnRef.current?.();
+      },
+      getLabel: () => labelRef.current,
+    }),
+    []
+  );
   return <PrimaryActionCtx.Provider value={value}>{children}</PrimaryActionCtx.Provider>;
 }
 
