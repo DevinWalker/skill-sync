@@ -117,7 +117,7 @@ export function LibraryPage() {
               disabled={planMut.isPending}
               className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-primary text-primary-foreground border border-primary text-[12.5px] font-medium hover:brightness-105 shadow-[0_8px_24px_-8px_var(--accent-glow)]"
             >
-              {planMut.isPending ? "Drafting…" : "Sync all"} <Kbd className="!bg-transparent !border-black/15 !text-black/55">↵</Kbd>
+              {planMut.isPending ? "Drafting…" : "Sync mine"} <Kbd className="!bg-transparent !border-black/15 !text-black/55">↵</Kbd>
             </button>
           </div>
         </div>
