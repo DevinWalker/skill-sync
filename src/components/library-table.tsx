@@ -1,11 +1,13 @@
 import { useSkills } from "@/hooks/use-skills";
+import { useOwnership } from "@/hooks/use-ownership";
 import { OwnerBadge } from "./owner-badge";
 
 export function LibraryTable() {
-  const { data, isLoading, error } = useSkills();
-  if (isLoading) return <div className="p-8 text-muted-foreground text-sm">Scanning…</div>;
-  if (error) return <div className="p-8 text-danger text-sm">{String(error)}</div>;
-  if (!data) return null;
+  const skills = useSkills();
+  const { data: ownership } = useOwnership();
+  if (skills.isLoading) return <div className="p-8 text-muted-foreground text-sm">Scanning…</div>;
+  if (skills.error) return <div className="p-8 text-danger text-sm">{String(skills.error)}</div>;
+  if (!skills.data) return null;
   return (
     <table className="w-full">
       <thead>
@@ -16,13 +18,16 @@ export function LibraryTable() {
         </tr>
       </thead>
       <tbody>
-        {data.map((s) => (
-          <tr key={s.name} className="border-t border-border">
-            <td className="px-6 py-2.5 text-sm">{s.name}</td>
-            <td><OwnerBadge klass={s.class} /></td>
-            <td className="text-xs text-muted-foreground">{s.locations.length}</td>
-          </tr>
-        ))}
+        {skills.data.map((s) => {
+          const confirmed = ownership?.skills?.[s.name]?.class === "mine";
+          return (
+            <tr key={s.name} className="border-t border-border">
+              <td className="px-6 py-2.5 text-sm">{s.name}</td>
+              <td><OwnerBadge klass={s.class} confirmed={confirmed} /></td>
+              <td className="text-xs text-muted-foreground">{s.locations.length}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
