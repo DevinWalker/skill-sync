@@ -1,15 +1,26 @@
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { ipc } from "@/lib/ipc";
+import type { SkillView } from "@/types/bindings";
 
 export default function App() {
+  const [skills, setSkills] = useState<SkillView[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    ipc.listSkills()
+      .then(setSkills)
+      .catch((e) => setError(String(e)));
+  }, []);
   return (
-    <div className="p-8 space-y-4">
+    <div className="p-8 space-y-3">
       <h1 className="text-lg">Skill Sync</h1>
-      <p className="text-muted-foreground text-sm">Warm-minimal tokens loaded.</p>
-      <div className="flex gap-3">
-        <Button>Primary</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="secondary">Secondary</Button>
-      </div>
+      {error && <p className="text-danger text-sm">{error}</p>}
+      <ul className="space-y-1 text-sm">
+        {skills.map((s) => (
+          <li key={s.name} className="font-mono">
+            {s.name} — <span className="text-muted-foreground">{String(s.class)}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

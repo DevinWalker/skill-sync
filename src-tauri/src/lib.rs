@@ -6,6 +6,9 @@ pub mod discovery;
 pub mod provenance;
 pub mod identity;
 pub mod aggregator;
+pub mod ipc;
+
+use ipc::commands::cmd_list_skills;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -17,7 +20,9 @@ fn greet(name: &str) -> String {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![greet, cmd_list_skills])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
