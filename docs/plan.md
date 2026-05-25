@@ -498,6 +498,8 @@ Each milestone produces working software. Implement in order; review after each.
 
 > **Important:** Test fixtures live under `src-tauri/tests/fixtures/`. Never let any test touch the real `~/.claude`, `~/.codex`, `~/.cursor`, `~/.agents`, or `~/.Trash`. Always pass an explicit `home_dir: &Path` into the modules under test and inject a `tempfile::TempDir` from each test.
 
+> **ts-rs binding aggregation (M1 lesson):** ts-rs 9.0.1's auto-export writes truncate the target file, so multiple types sharing the same `export_to` clobber each other. We work around it via `src-tauri/tests/zz_bindings.rs` — an integration test that runs last (cargo runs integration tests alphabetically) and writes a single aggregated `src/types/bindings.ts`. **Whenever you add a new `#[derive(TS)] #[ts(export, …)]` type, you must also add a line for it in `zz_bindings.rs`** (`out.push_str(&decl::<YourType>());`) or the type won't make it into the generated file. The per-type `#[ts(export, export_to = "../../src/types/bindings.ts")]` annotation is kept harmlessly — the aggregator just overwrites those writes.
+
 ### Task 1: Scaffold Tauri + Vite + React + TS
 
 **Files:**
