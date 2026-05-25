@@ -170,8 +170,8 @@ code, .mono, .font-mono {
 /* Pulse halo */
 @keyframes console-pulse {
   0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
-  70%  { box-shadow: 0 0 0 10px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
+  70%  { box-shadow: 0 0 0 10px rgba(211,236,90,0); }
+  100% { box-shadow: 0 0 0 0 rgba(211,236,90,0); }
 }
 
 ::selection { background: color-mix(in oklch, var(--primary) 30%, transparent); color: var(--foreground); }
