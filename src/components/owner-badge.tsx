@@ -1,19 +1,23 @@
 import type { Class } from "@/types/bindings";
 
-const config: Record<Class, { label: string; tone: string }> = {
-  MineHeuristic: { label: "Mine (auto)", tone: "bg-warning/15 text-warning" },
-  Bundle:        { label: "Bundle",      tone: "bg-muted text-muted-foreground" },
-  ToolBuiltin:   { label: "Built-in",    tone: "bg-muted text-muted-foreground" },
-  Unknown:       { label: "Unknown",     tone: "bg-danger/15 text-danger" },
+type Config = { label: string; tone: string; mark: string };
+
+const config: Record<Class, Config> = {
+  MineHeuristic: { label: "Mine · auto", tone: "text-warning",          mark: "◇" },
+  Bundle:        { label: "Bundle",      tone: "text-muted-foreground", mark: "○" },
+  ToolBuiltin:   { label: "Built-in",    tone: "text-muted-foreground", mark: "·" },
+  Unknown:       { label: "Unknown",     tone: "text-danger",           mark: "?" },
 };
 
+const confirmedMine: Config = { label: "Mine", tone: "text-primary", mark: "◆" };
+
 export function OwnerBadge({ klass, confirmed }: { klass: Class; confirmed?: boolean }) {
-  const c =
-    confirmed && klass === "MineHeuristic"
-      ? { label: "Mine", tone: "bg-success/15 text-success" }
-      : config[klass];
+  const c = confirmed && klass === "MineHeuristic" ? confirmedMine : config[klass];
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs ${c.tone}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest ${c.tone}`}
+    >
+      <span aria-hidden className="text-[14px] leading-none translate-y-[-1px]">{c.mark}</span>
       {c.label}
     </span>
   );

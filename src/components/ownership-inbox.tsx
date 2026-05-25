@@ -1,5 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership, useSetOwnership } from "@/hooks/use-ownership";
@@ -21,9 +20,7 @@ export function OwnershipInbox() {
 
   if (!unknowns.length) return null;
 
-  const decide = (name: string, klass: OwnershipClass) =>
-    set.mutate({ name, klass });
-
+  const decide = (name: string, klass: OwnershipClass) => set.mutate({ name, klass });
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) setDismissed(true);
@@ -31,39 +28,54 @@ export function OwnershipInbox() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Tag your skills</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground mb-3">
-          {unknowns.length} skill{unknowns.length === 1 ? "" : "s"} look like yours.
-          Confirm so sync only touches what you own.
-        </p>
-        <ul className="space-y-2 max-h-80 overflow-auto">
+      <DialogContent className="max-w-xl bg-card border border-border p-0">
+        <header className="px-8 py-7 border-b border-border">
+          <div className="eyebrow mb-3">·  Acquisitions desk  ·</div>
+          <h2
+            className="font-display text-[28px] leading-tight tracking-tight"
+            style={{ fontVariationSettings: '"SOFT" 50, "opsz" 144' }}
+          >
+            <span className="italic font-light">{unknowns.length}</span> {unknowns.length === 1 ? "entry" : "entries"}
+            <br />
+            <span className="italic font-light">await</span> attribution.
+          </h2>
+          <p className="mt-3 font-body italic text-[14px] text-muted-foreground">
+            Confirm authorship so sync only handles what you own.
+          </p>
+        </header>
+
+        <ul className="max-h-[420px] overflow-auto divide-y divide-border">
           {unknowns.map((s) => (
             <li
               key={s.name}
-              className="flex items-center justify-between rounded border border-border p-3"
+              className="px-8 py-5 flex items-center justify-between gap-6"
             >
-              <div>
-                <div className="text-sm">{s.name}</div>
+              <div className="min-w-0">
+                <div
+                  className="font-display text-[20px] leading-tight truncate"
+                  style={{ fontVariationSettings: '"SOFT" 30, "opsz" 144' }}
+                >
+                  {s.name}
+                </div>
                 {s.description && (
-                  <div className="text-xs text-muted-foreground line-clamp-1">
+                  <div className="mt-1 font-body italic text-[13px] text-muted-foreground line-clamp-1">
                     {s.description}
                   </div>
                 )}
               </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
+              <div className="inline-flex border border-border divide-x divide-border shrink-0">
+                <button
                   onClick={() => decide(s.name, "external")}
+                  className="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                 >
                   External
-                </Button>
-                <Button size="sm" onClick={() => decide(s.name, "mine")}>
+                </button>
+                <button
+                  onClick={() => decide(s.name, "mine")}
+                  className="px-3 py-2 font-mono text-[10px] uppercase tracking-widest bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
                   Mine
-                </Button>
+                </button>
               </div>
             </li>
           ))}

@@ -1,14 +1,24 @@
 import type { DriftStatus } from "@/types/bindings";
 
-const config: Record<DriftStatus, { label: string; tone: string }> = {
-  "in-sync":              { label: "in sync",   tone: "text-success" },
-  "drifted-target-newer": { label: "drifted ↑", tone: "text-warning" },
-  "drifted-source-newer": { label: "drifted ↓", tone: "text-warning" },
-  "missing-in-target":    { label: "missing",   tone: "text-muted-foreground" },
-  "unmanaged":            { label: "symlinked", tone: "text-muted-foreground" },
-  "refused":              { label: "refused",   tone: "text-danger" },
+type Config = { label: string; tone: string; mark: string };
+
+const config: Record<DriftStatus, Config> = {
+  "in-sync":              { label: "synced",    tone: "text-success",          mark: "●" },
+  "drifted-target-newer": { label: "drift ↑",   tone: "text-warning",          mark: "▲" },
+  "drifted-source-newer": { label: "drift ↓",   tone: "text-warning",          mark: "▼" },
+  "missing-in-target":    { label: "absent",    tone: "text-muted-foreground", mark: "○" },
+  "unmanaged":            { label: "linked",    tone: "text-muted-foreground", mark: "↪" },
+  "refused":              { label: "refused",   tone: "text-danger",           mark: "✕" },
 };
 
 export function DriftBadge({ status }: { status: DriftStatus }) {
-  return <span className={`text-xs ${config[status].tone}`}>{config[status].label}</span>;
+  const c = config[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest ${c.tone}`}
+    >
+      <span aria-hidden className="text-[10px] leading-none">{c.mark}</span>
+      {c.label}
+    </span>
+  );
 }

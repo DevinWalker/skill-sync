@@ -1,10 +1,10 @@
 import { useSetOwnership } from "@/hooks/use-ownership";
 import type { OwnershipClass } from "@/types/bindings";
 
-const OPTIONS: { value: OwnershipClass; label: string }[] = [
-  { value: "mine", label: "Mine" },
-  { value: "external", label: "External" },
-  { value: "ignore", label: "Ignore" },
+const OPTIONS: { value: OwnershipClass; label: string; mark: string }[] = [
+  { value: "mine",     label: "Mine",     mark: "◆" },
+  { value: "external", label: "External", mark: "○" },
+  { value: "ignore",   label: "Ignore",   mark: "·" },
 ];
 
 export function OwnershipPicker({
@@ -16,21 +16,25 @@ export function OwnershipPicker({
 }) {
   const set = useSetOwnership();
   return (
-    <div className="flex gap-1.5">
-      {OPTIONS.map((o) => (
-        <button
-          key={o.value}
-          onClick={() => set.mutate({ name, klass: o.value })}
-          className={
-            "px-2.5 py-1 text-xs rounded border transition-colors " +
-            (current === o.value
-              ? "bg-primary text-primary-foreground border-primary"
-              : "border-border hover:bg-secondary")
-          }
-        >
-          {o.label}
-        </button>
-      ))}
+    <div className="inline-flex border border-border divide-x divide-border">
+      {OPTIONS.map((o) => {
+        const active = current === o.value;
+        return (
+          <button
+            key={o.value}
+            onClick={() => set.mutate({ name, klass: o.value })}
+            className={
+              "inline-flex items-center gap-2 px-4 py-2 transition-colors " +
+              (active
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-secondary text-foreground")
+            }
+          >
+            <span aria-hidden className="text-[14px] leading-none">{o.mark}</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest">{o.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

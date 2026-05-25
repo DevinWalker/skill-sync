@@ -1,12 +1,22 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useUIState } from "@/store/ui-state";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { usePullBack } from "@/hooks/use-sync";
 import { OwnershipPicker } from "./ownership-picker";
+import { OwnerBadge } from "./owner-badge";
 import { DriftBadge } from "./drift-badge";
 import { ipc } from "@/lib/ipc";
+
+function EyebrowRule({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      <span className="eyebrow whitespace-nowrap">{children}</span>
+      <span className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
 
 export function SkillDetailDrawer() {
   const selected = useUIState((s) => s.selectedSkill);
@@ -16,58 +26,87 @@ export function SkillDetailDrawer() {
   const drift = useDrift();
   const pullBack = usePullBack();
   const skill = skills.data?.find((s) => s.name === selected) ?? null;
+  const confirmed = !!skill && ownership.data?.skills?.[skill.name]?.class === "mine";
+
   return (
     <Sheet open={!!selected} onOpenChange={(v) => !v && close(null)}>
-      <SheetContent className="w-[480px] sm:max-w-[480px] overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-[520px] sm:max-w-[520px] overflow-y-auto bg-card p-0 border-l border-border"
+      >
         {skill && (
-          <>
-            <SheetHeader>
-              <SheetTitle>{skill.name}</SheetTitle>
-            </SheetHeader>
+          <article className="px-9 py-10">
+            {/* Eyebrow */}
+            <div className="flex items-baseline justify-between mb-6">
+              <div className="eyebrow">·  Specimen Card  ·</div>
+              <OwnerBadge klass={skill.class} confirmed={confirmed} />
+            </div>
+
+            {/* Title */}
+            <h2
+              className="font-display text-[40px] leading-[1.02] tracking-tight"
+              style={{ fontVariationSettings: '"SOFT" 50, "opsz" 144' }}
+            >
+              {skill.name}
+            </h2>
             {skill.description && (
-              <p className="text-sm text-muted-foreground mt-1">{skill.description}</p>
+              <p className="mt-3 font-body italic text-[15px] text-muted-foreground leading-snug">
+                {skill.description}
+              </p>
             )}
 
-            <section className="mt-6">
-              <h3 className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Ownership
-              </h3>
+            {/* Rule */}
+            <div className="h-px bg-foreground/30 my-7" />
+
+            {/* Provenance */}
+            <section className="mb-8">
+              <EyebrowRule>I.  Provenance</EyebrowRule>
               <OwnershipPicker
                 name={skill.name}
                 current={ownership.data?.skills?.[skill.name]?.class}
               />
             </section>
 
-            <section className="mt-6">
-              <h3 className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Locations
-              </h3>
-              <ul className="space-y-2">
-                {skill.locations.map((l) => (
-                  <li key={String(l.path)} className="text-xs">
-                    <div className="mono break-all">{String(l.path)}</div>
-                    <div className="text-muted-foreground">
-                      hash: <span className="mono">{l.hash.slice(0, 12)}</span>
-                      {l.is_symlink ? " · symlink" : ""}
+            {/* Locations */}
+            <section className="mb-8">
+              <EyebrowRule>II.  Locations on record</EyebrowRule>
+              <ol className="space-y-3">
+                {skill.locations.map((l, i) => (
+                  <li key={String(l.path)} className="flex gap-4">
+                    <span className="font-mono text-[10px] text-muted-foreground/60 pt-0.5 w-6 shrink-0">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-mono text-[12px] break-all leading-snug">
+                        {String(l.path)}
+                      </div>
+                      <div className="mt-1 flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                        <span>hash {l.hash.slice(0, 10)}</span>
+                        {l.is_symlink && (
+                          <>
+                            <span className="text-muted-foreground/40">·</span>
+                            <span>symbolic link</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}
-              </ul>
+              </ol>
             </section>
 
-            <section className="mt-6">
-              <h3 className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-                Targets
-              </h3>
-              <ul className="space-y-1.5">
+            {/* Targets */}
+            <section className="mb-8">
+              <EyebrowRule>III.  Custody across targets</EyebrowRule>
+              <ul className="divide-y divide-border">
                 {Object.entries(drift.data?.[skill.name] ?? {}).map(([target, status]) => (
-                  <li key={target} className="flex justify-between items-center text-sm">
-                    <span className="capitalize">{target}</span>
-                    <div className="flex items-center gap-3">
+                  <li key={target} className="py-2.5 flex items-center justify-between">
+                    <span className="font-display text-[17px] capitalize">{target}</span>
+                    <div className="flex items-center gap-4">
                       <DriftBadge status={status} />
                       {status === "drifted-target-newer" && (
                         <button
-                          className="text-xs underline text-muted-foreground hover:text-foreground"
+                          className="font-mono text-[10px] uppercase tracking-widest underline underline-offset-4 decoration-muted-foreground/40 hover:decoration-foreground hover:text-foreground text-muted-foreground transition-colors"
                           onClick={() => {
                             if (
                               confirm(
@@ -87,9 +126,10 @@ export function SkillDetailDrawer() {
               </ul>
             </section>
 
-            <section className="mt-6">
+            {/* Actions */}
+            <section>
+              <EyebrowRule>IV.  Acts of preservation</EyebrowRule>
               <button
-                className="text-xs underline text-muted-foreground hover:text-foreground"
                 onClick={async () => {
                   try {
                     const p = await ipc.buildPackage(skill.name);
@@ -98,11 +138,13 @@ export function SkillDetailDrawer() {
                     alert(`Failed: ${String(e)}`);
                   }
                 }}
+                className="inline-flex items-center gap-3 border border-foreground/30 hover:border-primary hover:text-primary px-4 py-2 transition-colors"
               >
-                Build .skill package
+                <span className="font-mono text-[10px] uppercase tracking-widest">Build .skill</span>
+                <span className="text-[12px] leading-none">↓</span>
               </button>
             </section>
-          </>
+          </article>
         )}
       </SheetContent>
     </Sheet>
