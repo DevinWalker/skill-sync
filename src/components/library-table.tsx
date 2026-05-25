@@ -7,7 +7,7 @@ import { useUIState } from "@/store/ui-state";
 import { OwnerBadge } from "./owner-badge";
 import { OwnershipPicker } from "./ownership-picker";
 import { DriftBar } from "./drift-bar";
-import type { DriftStatus, SkillView } from "@/types/bindings";
+import type { DriftStatus, OwnershipClass, SkillView } from "@/types/bindings";
 
 interface Props {
   filter?: string;
@@ -78,7 +78,8 @@ export function LibraryTable({
         </div>
         <ul>
           {rows.map((s, i) => {
-            const confirmed = ownership?.skills?.[s.name]?.class === "mine";
+            const ownershipEntry = ownership?.skills?.[s.name];
+            const confirmed = ownershipEntry?.class === "mine";
             const driftRow = (drift.data?.[s.name] ?? {}) as Partial<Record<string, DriftStatus>>;
             const isSelected = selectedSkill === s.name;
             return (
@@ -87,6 +88,7 @@ export function LibraryTable({
                 index={i}
                 skill={s}
                 confirmed={confirmed}
+                currentOwnership={ownershipEntry?.class}
                 drift={driftRow}
                 enabled={enabledTargets}
                 isSelected={isSelected}
@@ -104,6 +106,7 @@ function SkillRow({
   index,
   skill,
   confirmed,
+  currentOwnership,
   drift,
   enabled,
   isSelected,
@@ -112,6 +115,7 @@ function SkillRow({
   index: number;
   skill: SkillView;
   confirmed: boolean;
+  currentOwnership: OwnershipClass | undefined;
   drift: Partial<Record<string, DriftStatus>>;
   enabled: Set<string>;
   isSelected: boolean;
@@ -151,13 +155,16 @@ function SkillRow({
         </div>
         <div className="font-mono text-[11.5px] text-muted-foreground">—</div>
         <div className="font-mono text-[11.5px] text-fg-dim text-right">{sizeKb} kB</div>
-        <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div
+          data-open={classifyOpen}
+          className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 data-[open=true]:opacity-100 transition-opacity"
+        >
           {isUnknown ? (
             <button
               className="font-mono text-[10.5px] px-2 py-1 rounded border border-primary bg-primary text-primary-foreground"
               onClick={(e) => { e.stopPropagation(); setClassifyOpen((v) => !v); }}
             >
-              classify
+              {classifyOpen ? "close" : "classify"}
             </button>
           ) : (
             <button
@@ -173,7 +180,7 @@ function SkillRow({
         <div className="px-3.5 pb-3">
           <OwnershipPicker
             name={skill.name}
-            current={undefined}
+            current={currentOwnership}
           />
         </div>
       )}
