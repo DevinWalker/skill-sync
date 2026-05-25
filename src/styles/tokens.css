@@ -28,7 +28,7 @@
   --popover:              #ffffff;
   --popover-foreground:   #0a0a0a;
 
-  --primary:              #6f8d18;        /* lime, darkened for AA on white */
+  --primary:              #5d7613;        /* lime, darkened to AA-pass on white */
   --primary-foreground:   #ffffff;
 
   --secondary:            #f1f1f1;
@@ -43,17 +43,17 @@
 
   --border:               #ebebeb;
   --input:                #ebebeb;
-  --ring:                 #6f8d18;
+  --ring:                 #5d7613;
 
-  --success:              #6f8d18;
+  --success:              #5d7613;
   --warning:              #b56a00;
   --danger:               #c4321a;
   --info:                 #1d72c4;
   --violet:               #7a4cd6;
 
   /* Console working aliases */
-  --fg-dim:               #8a8a8a;
-  --fg-faint:             #b3b3b3;
+  --fg-dim:               #767676;
+  --fg-faint:             #b3b3b3;  /* decorative chrome only — fails AA */
   --border-strong:        #d4d4d4;
   --bg-hover:             #f3f3f3;
   --accent-glow:          rgba(111,141,24,0.18);
@@ -97,8 +97,8 @@
   --info:                 #5ec2ff;
   --violet:               #b78cff;
 
-  --fg-dim:               #6f6f6f;
-  --fg-faint:             #4a4a4a;
+  --fg-dim:               #7c7c7c;
+  --fg-faint:             #4a4a4a;  /* decorative chrome only — fails AA */
   --border-strong:        #262626;
   --bg-hover:             #181818;
   --accent-glow:          rgba(211,236,90,0.18);
@@ -170,8 +170,8 @@ code, .mono, .font-mono {
 /* Pulse halo */
 @keyframes console-pulse {
   0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
-  70%  { box-shadow: 0 0 0 10px rgba(211,236,90,0); }
-  100% { box-shadow: 0 0 0 0 rgba(211,236,90,0); }
+  70%  { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 ::selection { background: color-mix(in oklch, var(--primary) 30%, transparent); color: var(--foreground); }

@@ -2,7 +2,7 @@ import { SettingsForm } from "@/components/settings-form";
 
 export function SettingsPage() {
   return (
-    <div className="archive-rise">
+    <div className="console-rise">
       <header className="px-12 pt-12 pb-10">
         <div className="eyebrow mb-5">·  Curator's preferences  ·  Folio IV</div>
         <h1

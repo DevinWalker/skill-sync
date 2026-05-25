@@ -2,7 +2,7 @@ import { ActivityList } from "@/components/activity-list";
 
 export function ActivityPage() {
   return (
-    <div className="archive-rise">
+    <div className="console-rise">
       <header className="px-12 pt-12 pb-10">
         <div className="eyebrow mb-5">·  Provenance log  ·  Folio III</div>
         <h1

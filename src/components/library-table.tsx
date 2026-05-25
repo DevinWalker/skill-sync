@@ -60,7 +60,7 @@ export function LibraryTable() {
           return (
             <li
               key={s.name}
-              className="archive-rise group border-b border-border last:border-b-0"
+              className="console-rise group border-b border-border last:border-b-0"
               style={{ animationDelay: `${Math.min(i * 28, 360)}ms` }}
             >
               <button

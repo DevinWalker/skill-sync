@@ -15,7 +15,7 @@ export function TargetsPage() {
   ];
 
   return (
-    <div className="archive-rise">
+    <div className="console-rise">
       <header className="px-12 pt-12 pb-10">
         <div className="eyebrow mb-5">·  Custody  ·  Folio II</div>
         <h1

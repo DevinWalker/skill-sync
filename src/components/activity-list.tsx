@@ -28,7 +28,7 @@ export function ActivityList() {
         return (
           <li
             key={i}
-            className="archive-rise grid grid-cols-[5rem_1fr_auto] gap-x-8 px-12 py-5 border-b border-border last:border-b-0 items-baseline"
+            className="console-rise grid grid-cols-[5rem_1fr_auto] gap-x-8 px-12 py-5 border-b border-border last:border-b-0 items-baseline"
             style={{ animationDelay: `${Math.min(i * 24, 320)}ms` }}
           >
             <div className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-widest pt-1">

@@ -28,7 +28,7 @@ export function LibraryPage() {
   }, [skills.data, ownership.data, drift.data]);
 
   return (
-    <div className="archive-rise">
+    <div className="console-rise">
       <header className="px-12 pt-12 pb-10">
         <div className="flex items-start justify-between gap-12">
           <div>
