@@ -5,9 +5,11 @@ import { OwnershipInbox } from "@/components/ownership-inbox";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
 import { SkillDetailDrawer } from "@/components/skill-detail-drawer";
 import { usePlanSync } from "@/hooks/use-sync";
+import { useDriftRefresh } from "@/hooks/use-drift-refresh";
 import type { SyncPlan } from "@/types/bindings";
 
 export function LibraryPage() {
+  useDriftRefresh();
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const planMut = usePlanSync();
   return (
