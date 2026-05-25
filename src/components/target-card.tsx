@@ -1,83 +1,92 @@
-import { useState } from "react";
+import { useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
+import { HealthBar } from "./health-bar";
+import { useDrift } from "@/hooks/use-drift";
+import { useSettings } from "@/hooks/use-settings";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { ipc } from "@/lib/ipc";
+import type { DriftStatus } from "@/types/bindings";
 
-const GLYPH: Record<string, string> = {
-  claude: "CL", codex: "CX", cursor: "CR", cowork: "CW",
+interface Props {
+  name: string;
+  path: string | undefined;
+  kind: "directory-mirror" | "package-only";
+}
+
+const PRETTY: Record<string, string> = {
+  claude: "Claude Code",
+  codex:  "Codex",
+  cursor: "Cursor",
+  cowork: "Cowork (zip)",
 };
 
-export function TargetCard({
-  name,
-  path,
-  kind,
-}: {
-  name: string;
-  path?: string;
-  kind: "directory-mirror" | "package-only";
-}) {
-  const [status, setStatus] = useState<"idle" | "ok" | "fail">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
-  const test = async () => {
-    if (!path) return;
-    try {
-      await ipc.testTargetWrite(path);
-      setStatus("ok");
-      setMsg(null);
-    } catch (e) {
-      setStatus("fail");
-      setMsg(String(e));
+export function TargetCard({ name, path, kind }: Props) {
+  const drift = useDrift();
+  const { data: settings } = useSettings();
+  const enabled = useMemo(() => new Set(settings?.enabled_targets ?? []), [settings?.enabled_targets]);
+  const isEnabled = enabled.has(name);
+
+  const counts = useMemo(() => {
+    let inSync = 0, d = 0, missing = 0, refused = 0;
+    for (const row of Object.values(drift.data ?? {})) {
+      const s = (row as Record<string, DriftStatus>)[name];
+      if (s === "in-sync") inSync++;
+      else if (s === "drifted-source-newer" || s === "drifted-target-newer") d++;
+      else if (s === "missing-in-target") missing++;
+      else if (s === "refused") refused++;
     }
+    return { inSync, drift: d, missing, refused };
+  }, [drift.data, name]);
+
+  const reveal = () => {
+    if (path) revealItemInDir(path).catch(() => {});
+  };
+  const test = () => {
+    if (path) ipc.testTargetWrite(path).catch(() => {});
   };
 
-  const kindLabel = kind === "directory-mirror" ? "Directory mirror" : "Package only";
-
   return (
-    <div className="border border-border bg-card p-7 flex flex-col h-full">
-      <div className="flex items-start justify-between">
+    <div className="border border-border rounded-lg bg-card p-5">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="eyebrow text-[9.5px] mb-3">{kindLabel}</div>
-          <h3
-            className="font-display text-[32px] leading-none capitalize tracking-tight"
-            style={{ fontVariationSettings: '"SOFT" 50, "opsz" 144' }}
-          >
-            {name}
-          </h3>
+          <div className="text-foreground text-[17px] font-medium leading-tight">
+            {PRETTY[name] ?? name}
+          </div>
+          <div className="font-mono text-[11px] text-fg-faint mt-1 truncate" title={path ?? ""}>
+            {path ? path.replace(/^.*\/Users\/[^/]+/, "~") : (kind === "package-only" ? "output directory in Settings" : "not configured")}
+          </div>
         </div>
-        <div className="font-mono text-[10px] tracking-widest text-muted-foreground/60">
-          {GLYPH[name] ?? "··"}
+        {!isEnabled ? <Badge variant="default">Disabled</Badge>
+          : !path && kind === "directory-mirror" ? <Badge variant="warning">Not configured</Badge>
+          : <Badge variant="primary"><span className="w-1.5 h-1.5 rounded-full bg-current"/>Active</Badge>}
+      </div>
+
+      <div className="mt-5">
+        <HealthBar inSync={counts.inSync} drift={counts.drift} missing={counts.missing} refused={counts.refused} />
+        <div className="mt-2 font-mono text-[11px] text-muted-foreground">
+          <span className="text-primary">{counts.inSync}</span> in sync ·
+          {" "}<span className={counts.drift ? "text-warning" : ""}>{counts.drift}</span> drift ·
+          {" "}<span>{counts.missing}</span> missing ·
+          {" "}<span className={counts.refused ? "text-destructive" : ""}>{counts.refused}</span> refused
         </div>
       </div>
 
-      <div className="h-px bg-border my-6" />
-
-      {path ? (
-        <div className="font-mono text-[11px] text-muted-foreground break-all">{path}</div>
-      ) : (
-        <div className="font-body italic text-[13px] text-muted-foreground">
-          Loads its own bundle. Use Build .skill to export.
-        </div>
-      )}
-
-      {kind === "directory-mirror" && (
-        <div className="mt-6 flex items-center gap-4">
-          <button
-            onClick={test}
-            disabled={!path}
-            className="inline-flex items-center gap-2 border border-foreground/30 hover:border-primary hover:text-primary px-3.5 py-1.5 transition-colors disabled:opacity-40"
-          >
-            <span className="font-mono text-[10px] uppercase tracking-widest">Test write</span>
-          </button>
-          {status === "ok" && (
-            <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-success">
-              <span aria-hidden>●</span> Writable
-            </span>
-          )}
-          {status === "fail" && (
-            <span className="font-mono text-[10px] uppercase tracking-widest text-danger truncate" title={msg ?? ""}>
-              ✕ {msg}
-            </span>
-          )}
-        </div>
-      )}
+      <div className="mt-5 flex gap-2">
+        <button
+          onClick={reveal}
+          disabled={!path}
+          className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
+        >
+          Reveal in Finder
+        </button>
+        <button
+          onClick={test}
+          disabled={!path}
+          className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
+        >
+          Test
+        </button>
+      </div>
     </div>
   );
 }
