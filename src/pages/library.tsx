@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { LibraryTable } from "@/components/library-table";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
 import { SkillDetailDrawer } from "@/components/skill-detail-drawer";
@@ -18,14 +19,7 @@ import { ipc } from "@/lib/ipc";
 import type { AuditEntry, DriftStatus, SyncPlan } from "@/types/bindings";
 import { cn } from "@/lib/utils";
 
-type OwnershipFilter = "all" | "mine" | "bundle" | "builtin" | "unknown";
-const FILTERS: { id: OwnershipFilter; label: string }[] = [
-  { id: "all",     label: "All" },
-  { id: "mine",    label: "Mine" },
-  { id: "bundle",  label: "Bundle" },
-  { id: "builtin", label: "Built-in" },
-  { id: "unknown", label: "Unknown" },
-];
+type OwnershipFilter = "all" | "mine" | "bundle" | "builtin" | "unknown" | "out-of-sync" | "orphan";
 
 export function LibraryPage() {
   useDriftRefresh();
@@ -35,6 +29,25 @@ export function LibraryPage() {
   const { data: settings } = useSettings();
   const c = useCopy();
   const mode = useMode();
+
+  const FILTERS_SIMPLE: { id: OwnershipFilter; label: string }[] = [
+    { id: "all",         label: "All" },
+    { id: "mine",        label: "Mine" },
+    { id: "unknown",     label: "Unknown" },
+    { id: "out-of-sync", label: "Out of sync" },
+  ];
+  const FILTERS_PRO: { id: OwnershipFilter; label: string }[] = [
+    { id: "all",     label: "All" },
+    { id: "mine",    label: "Mine" },
+    { id: "bundle",  label: "Bundle" },
+    { id: "builtin", label: "Built-in" },
+    { id: "unknown", label: "Unknown" },
+  ];
+  const FILTERS = mode === "simple" ? FILTERS_SIMPLE : FILTERS_PRO;
+
+  const [searchParams] = useSearchParams();
+  const urlFilter = searchParams.get("filter");
+
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const planMut = usePlanSync();
   const [filter, setFilter] = useState("");
@@ -52,6 +65,14 @@ export function LibraryPage() {
     action.setAction(() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) }), "Sync mine");
     return () => action.setAction(null);
   }, [action, planMut]);
+
+  useEffect(() => {
+    if (!urlFilter) return;
+    const valid = ["all", "mine", "bundle", "builtin", "unknown", "out-of-sync", "orphan"] as const;
+    if ((valid as readonly string[]).includes(urlFilter)) {
+      setOwnershipFilter(urlFilter as OwnershipFilter);
+    }
+  }, [urlFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,13 +212,15 @@ export function LibraryPage() {
   );
 }
 
-function countFor(f: OwnershipFilter, c: { total: number; mine: number; bundle: number; builtin: number; unknown: number }) {
+function countFor(f: OwnershipFilter, c: { total: number; mine: number; bundle: number; builtin: number; unknown: number; drifted: number }) {
   switch (f) {
-    case "all":     return c.total;
-    case "mine":    return c.mine;
-    case "bundle":  return c.bundle;
-    case "builtin": return c.builtin;
-    case "unknown": return c.unknown;
+    case "all":         return c.total;
+    case "mine":        return c.mine;
+    case "bundle":      return c.bundle;
+    case "builtin":     return c.builtin;
+    case "unknown":     return c.unknown;
+    case "out-of-sync": return c.drifted;
+    case "orphan":      return 0;
   }
 }
 

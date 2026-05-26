@@ -14,7 +14,7 @@ import type { DriftStatus, OwnershipClass, SkillView } from "@/types/bindings";
 
 interface Props {
   filter?: string;
-  ownershipFilter?: "all" | "mine" | "bundle" | "builtin" | "unknown";
+  ownershipFilter?: "all" | "mine" | "bundle" | "builtin" | "unknown" | "out-of-sync" | "orphan";
 }
 
 function firstPath(skill: SkillView): string {
@@ -96,6 +96,14 @@ export function LibraryTable({
         case "bundle":  return s.class === "Bundle";
         case "builtin": return s.class === "ToolBuiltin";
         case "unknown": return s.class === "Unknown";
+        case "out-of-sync": {
+          const row = drift.data?.[s.name];
+          if (!row) return false;
+          return Object.values(row).some((d) =>
+            d === "drifted-source-newer" || d === "drifted-target-newer" || d === "missing-in-target"
+          );
+        }
+        case "orphan": return false; // orphans render in their own section (Task 4.5)
       }
     };
     return all.filter((s) => matcher(s) && ownershipMatches(s));
