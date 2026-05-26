@@ -20,6 +20,7 @@ use skill_sync::sync::{PlanAction, PlanRow, SyncPlan};
 use skill_sync::types::Health;
 use skill_sync::ipc::git_status::GitStatus;
 use skill_sync::ipc::remove_from_target::RemoveResult;
+use skill_sync::ipc::list_packages::PackageInfo;
 
 fn decl<T: TS + ?Sized + 'static>() -> String {
     format!("export {}\n", T::decl())
@@ -50,6 +51,7 @@ fn aggregate_bindings_ts() {
     out.push_str(&decl::<AuditEntry>());
     out.push_str(&decl::<GitStatus>());
     out.push_str(&decl::<RemoveResult>());
+    out.push_str(&decl::<PackageInfo>());
 
     let path: PathBuf = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")

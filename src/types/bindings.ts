@@ -21,3 +21,4 @@ export type DriftStatus = "in-sync" | "drifted-target-newer" | "drifted-source-n
 export type AuditEntry = { ts: string, kind: string, data: any, };
 export type GitStatus = { branch: string, uncommitted: number, ahead: number, behind: number, has_upstream: boolean, };
 export type RemoveResult = { archived_to: string, };
+export type PackageInfo = { name: string, path: string, size_bytes: bigint, modified_at: string, };
