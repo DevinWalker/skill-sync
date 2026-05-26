@@ -1,50 +1,22 @@
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { useMode } from "@/hooks/use-mode";
-import { useCopy } from "@/hooks/use-copy";
 import { activitySentence } from "@/lib/activity-sentence";
+import { strings } from "@/lib/copy";
 import { friendlyTime } from "@/lib/time";
 import { ipc } from "@/lib/ipc";
 import { cn } from "@/lib/utils";
 import type { AuditEntry } from "@/types/bindings";
 
-type FilterId = "all" | "sync" | "pull" | "package" | "archive" | "refused" | "drift";
+type FilterId = "all" | "sync" | "pull" | "archive" | "drift";
 
 const simpleFilterIds = ["all", "sync", "pull", "archive", "drift"] as const;
-const proFilterIds = ["all", "sync", "pull", "package", "refused", "drift"] as const;
 
 function matchFilter(kind: string, f: FilterId): boolean {
   if (f === "all") return true;
   if (f === "sync")    return kind === "sync.execute" || kind === "sync.commit";
   if (f === "pull")    return kind === "sync.pull_back" || kind === "pull.back";
-  if (f === "package") return kind === "package.build";
   if (f === "archive") return kind === "archive";
-  if (f === "refused") return kind === "refused";
   if (f === "drift")   return kind === "drift.detected";
   return false;
-}
-
-function tone(kind: string): "primary" | "info" | "violet" | "default" {
-  if (kind === "sync.execute") return "primary";
-  if (kind === "sync.pull_back") return "info";
-  if (kind === "package.build") return "violet";
-  return "default";
-}
-
-function detailFor(e: AuditEntry): string {
-  const data = e.data ?? {};
-  switch (e.kind) {
-    case "sync.execute":   return `${data.rows ?? 0} change${data.rows === 1 ? "" : "s"}`;
-    case "sync.pull_back": return String(data.label ?? "—");
-    case "package.build":  return String(data.skill ?? "—");
-    default:               return "—";
-  }
-}
-
-function outcomeFor(e: AuditEntry): string {
-  const data = e.data ?? {};
-  if (e.kind === "package.build" && data.out) return String(data.out);
-  return "—";
 }
 
 function dotColorFor(kind: string): string {
@@ -62,23 +34,14 @@ function dotColorFor(kind: string): string {
 }
 
 export function ActivityList() {
-  const mode = useMode();
-  const c = useCopy();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [filter, setFilter] = useState<FilterId>("all");
   const [limit, setLimit] = useState(50);
 
-  // Build filter chips from mode-aware labels
-  const ids = mode === "simple" ? simpleFilterIds : proFilterIds;
-  const labels = c.activityFilters;
+  // Build filter chips from Simple filter set
+  const ids = simpleFilterIds;
+  const labels = strings.activityFilters;
   const filterChips = labels.map((label, i) => ({ id: ids[i] as FilterId, label }));
-
-  // Fallback to "all" if filter is not valid in current mode
-  useEffect(() => {
-    if (!ids.includes(filter as any)) {
-      setFilter("all");
-    }
-  }, [mode, ids, filter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,8 +74,7 @@ export function ActivityList() {
         ))}
       </div>
 
-      {mode === "simple" ? (
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
+      <div className="border border-border rounded-lg bg-card overflow-hidden">
           <ul>
             {shown.map((e, i) => (
               <li key={i} className="grid grid-cols-[150px_1fr_auto] gap-x-3 items-center px-3.5 py-2.5 border-b border-border last:border-b-0 hover:bg-bg-hover">
@@ -137,39 +99,6 @@ export function ActivityList() {
             </button>
           )}
         </div>
-      ) : (
-        <div className="border border-border rounded-lg bg-card overflow-hidden">
-          <div className="grid grid-cols-[120px_120px_1fr_120px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
-            <div className="eyebrow">Time</div>
-            <div className="eyebrow">Kind</div>
-            <div className="eyebrow">Detail</div>
-            <div className="eyebrow">Target</div>
-            <div className="eyebrow">Outcome</div>
-          </div>
-          <ul>
-            {shown.map((e, i) => {
-              const ts = e.ts.replace("T", " ").replace(/\.\d+Z?$/, "");
-              return (
-                <li key={i} className="grid grid-cols-[120px_120px_1fr_120px_140px] gap-x-3 items-center px-3.5 py-2.5 border-b border-border last:border-b-0 hover:bg-bg-hover">
-                  <div className="font-mono text-[11px] text-fg-dim">{ts}</div>
-                  <div><Badge variant={tone(e.kind)}>{e.kind}</Badge></div>
-                  <div className="font-mono text-[11.5px] text-muted-foreground truncate">{detailFor(e)}</div>
-                  <div className="font-mono text-[11px] text-muted-foreground">—</div>
-                  <div className="font-mono text-[11px] text-muted-foreground truncate" title={outcomeFor(e)}>{outcomeFor(e)}</div>
-                </li>
-              );
-            })}
-          </ul>
-          {filtered.length > limit && (
-            <button
-              onClick={() => setLimit((l) => l + 50)}
-              className="w-full py-3 font-mono text-[11px] text-muted-foreground hover:text-foreground border-t border-border"
-            >
-              Load 50 more · {filtered.length - limit} remaining
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
