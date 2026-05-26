@@ -1,10 +1,12 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCopy } from "@/hooks/use-copy";
 import { useSkills } from "@/hooks/use-skills";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
-import { useMemo } from "react";
-import type { DriftStatus, SkillView } from "@/types/bindings";
+import { usePlanSync } from "@/hooks/use-sync";
+import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
+import type { DriftStatus, SkillView, SyncPlan } from "@/types/bindings";
 
 function classify(
   skills: SkillView[],
@@ -42,21 +44,45 @@ export function HomePage() {
   const { data: settings } = useSettings();
   const targets = settings?.enabled_targets ?? [];
   const counts = useMemo(() => classify(skills, drift, targets), [skills, drift, targets]);
+  const planMut = usePlanSync();
+  const [plan, setPlan] = useState<SyncPlan | null>(null);
+  const [, setNewSkillOpen] = useState(false);
 
   return (
     <main className="px-8 pt-7 pb-20">
-      <div className="mb-6">
-        <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-faint)]">
-          {c.homeCrumb}
-        </p>
-        <h1 className="text-[28px] font-semibold tracking-[-0.02em]">
-          {counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0
-            ? `Your ${skills.length} skills are in sync across ${targets.length} tools.`
-            : `${counts.inSync} of your ${skills.length} skills are in sync. ${counts.outOfSync} out of sync, ${counts.orphans} not in your source.`}
-        </h1>
-        <p className="mt-1 font-mono text-[11px] text-[var(--fg-dim)]">
-          last scan · source {settings?.source_root ?? "—"}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-6">
+        <div>
+          <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-faint)]">
+            {c.homeCrumb}
+          </p>
+          <h1 className="text-[28px] font-semibold tracking-[-0.02em]">
+            {counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0
+              ? `Your ${skills.length} skills are in sync across ${targets.length} tools.`
+              : `${counts.inSync} of your ${skills.length} skills are in sync. ${counts.outOfSync} out of sync, ${counts.orphans} not in your source.`}
+          </h1>
+          <p className="mt-1 font-mono text-[11px] text-[var(--fg-dim)]">
+            last scan · source {settings?.source_root ?? "—"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 pt-6">
+          <button
+            type="button"
+            onClick={() =>
+              planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })
+            }
+            disabled={planMut.isPending || skills.length === 0}
+            className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105 disabled:opacity-50"
+          >
+            {planMut.isPending ? "Drafting…" : `${c.syncEverythingButton} ↵`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setNewSkillOpen(true)}
+            className="rounded-md border border-[var(--border)] px-3.5 py-1.5 text-[12.5px] font-medium hover:bg-[var(--bg-hover)]"
+          >
+            + New skill
+          </button>
+        </div>
       </div>
 
       {/* Status strip */}
@@ -66,6 +92,7 @@ export function HomePage() {
         <Cell label={c.statusNeedsClaiming} value={`${counts.orphans} skills`} onClick={() => nav("/library?filter=orphan")} />
         <Cell label={c.statusUnknown} value={`${counts.unknown} skills`} onClick={() => nav("/library?filter=unknown")} />
       </div>
+      <SyncPreviewDialog plan={plan} open={!!plan} onOpenChange={(v) => !v && setPlan(null)} />
     </main>
   );
 }
