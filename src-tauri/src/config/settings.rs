@@ -13,16 +13,8 @@ pub struct Settings {
     pub enabled_targets: Vec<String>,
     pub cowork_package_enabled: bool,
     pub theme: String,
-    #[serde(default = "default_mode")]
-    pub mode: String,
     #[serde(default = "default_first_run_completed")]
     pub first_run_completed: bool,
-    #[serde(default)]
-    pub mode_migration_announced: bool,
-}
-
-fn default_mode() -> String {
-    "pro".into() // Existing installs migrate to pro; new installs override to "simple" via first-run.
 }
 
 fn default_first_run_completed() -> bool {
@@ -42,9 +34,7 @@ impl Settings {
             enabled_targets: vec!["claude".into(), "codex".into(), "cursor".into()],
             cowork_package_enabled: true,
             theme: "system".into(),
-            mode: "simple".into(),
             first_run_completed: false,
-            mode_migration_announced: false,
         }
     }
 }
@@ -54,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn deserializing_legacy_settings_fills_mode_with_pro() {
+    fn deserializing_legacy_settings_fills_first_run_completed() {
         let legacy_json = r#"{
             "version": 1,
             "source_root": "/tmp/x",
@@ -66,17 +56,14 @@ mod tests {
             "theme": "dark"
         }"#;
         let settings: Settings = serde_json::from_str(legacy_json).unwrap();
-        assert_eq!(settings.mode, "pro");
         // Legacy installs skip first-run (already had a working app before this redesign).
         assert!(settings.first_run_completed);
-        assert!(!settings.mode_migration_announced);
     }
 
     #[test]
-    fn fresh_defaults_use_simple_mode() {
+    fn fresh_defaults_set_first_run_not_completed() {
         let home = std::path::Path::new("/tmp/home");
         let s = Settings::defaults(home);
-        assert_eq!(s.mode, "simple");
         assert!(!s.first_run_completed);
     }
 }
