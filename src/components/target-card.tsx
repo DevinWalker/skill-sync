@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { HealthBar } from "./health-bar";
 import { useDrift } from "@/hooks/use-drift";
-import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
+import { useSettings, useSetSettings } from "@/hooks/use-settings";
 import { useCopy } from "@/hooks/use-copy";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { ipc } from "@/lib/ipc";
@@ -40,7 +40,7 @@ export function TargetCard({ name, path, kind }: Props) {
     return { inSync, drift: d, missing, refused };
   }, [drift.data, name]);
 
-  const update = useUpdateSettings();
+  const update = useSetSettings();
 
   const toggle = () => {
     if (!settings) return;
