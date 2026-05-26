@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { OwnerBadge } from "./owner-badge";
 import { DriftBadge } from "./drift-badge";
+import { CompareDialog } from "./compare-dialog";
 import { useUIState } from "@/store/ui-state";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { usePullBack } from "@/hooks/use-sync";
+import { useMode } from "@/hooks/use-mode";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import type { DriftStatus, LocationView } from "@/types/bindings";
 
@@ -32,6 +35,8 @@ export function SkillDetailDrawer() {
   const ownership = useOwnership();
   const drift = useDrift();
   const pullBack = usePullBack();
+  const mode = useMode();
+  const [compareTarget, setCompareTarget] = useState<string | null>(null);
   const skill = skills.data?.find((s) => s.name === selected) ?? null;
   if (!skill) return <Sheet open={false} onOpenChange={(v) => !v && close(null)}><SheetContent side="right" /></Sheet>;
 
@@ -58,8 +63,8 @@ export function SkillDetailDrawer() {
             <dd className="text-foreground"><OwnerBadge klass={skill.class} confirmed={confirmed} /></dd>
             <dt className="text-fg-dim">locations</dt>
             <dd className="text-foreground">{skill.locations.length}</dd>
-            <dt className="text-fg-dim">hash</dt>
-            <dd className="text-foreground">{primaryLoc?.hash.slice(0, 12) ?? "—"}</dd>
+            {mode === "pro" && <dt className="text-fg-dim">hash</dt>}
+            {mode === "pro" && <dd className="text-foreground">{primaryLoc?.hash.slice(0, 12) ?? "—"}</dd>}
             <dt className="text-fg-dim">symlink</dt>
             <dd className="text-foreground">{primaryLoc?.is_symlink ? "yes" : "no"}</dd>
           </dl>
@@ -73,6 +78,14 @@ export function SkillDetailDrawer() {
                   <div className="text-sm">{PRETTY_TARGET[t]}</div>
                   <div>{status ? <DriftBadge status={status} /> : <span className="font-mono text-[10.5px] text-fg-dim">—</span>}</div>
                   <div className="flex gap-1.5">
+                    {mode === "simple" && (status === "drifted-target-newer" || status === "drifted-source-newer") && (
+                      <button
+                        onClick={() => setCompareTarget(t)}
+                        className="font-mono text-[10.5px] px-2 py-1 rounded border border-border bg-card text-muted-foreground hover:bg-bg-hover"
+                      >
+                        compare
+                      </button>
+                    )}
                     {status === "drifted-target-newer" && (
                       <button
                         onClick={() => pullBack.mutate({ skill: skill.name, target: t })}
@@ -99,15 +112,30 @@ export function SkillDetailDrawer() {
             >
               Reveal in Finder
             </button>
-            <button
-              disabled
-              title="Packaging not yet wired"
-              className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground opacity-50 cursor-not-allowed"
-            >
-              Build .skill
-            </button>
+            {mode === "pro" && (
+              <button
+                disabled
+                title="Packaging not yet wired"
+                className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground opacity-50 cursor-not-allowed"
+              >
+                Build .skill
+              </button>
+            )}
           </div>
         </div>
+
+        {compareTarget && (
+          <CompareDialog
+            open={!!compareTarget}
+            onClose={() => setCompareTarget(null)}
+            skillName={skill.name}
+            tool={compareTarget}
+            yourPath={primaryLoc?.path ?? ""}
+            yourUpdated={primaryLoc?.path ?? ""}
+            theirPath={primaryLoc?.path ?? ""}
+            theirUpdated={primaryLoc?.path ?? ""}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );
