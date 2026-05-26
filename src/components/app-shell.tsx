@@ -7,6 +7,7 @@ import { Sidebar } from "./sidebar";
 import { TitleBar } from "./title-bar";
 import { CmdBar } from "./cmd-bar";
 import { CmdPalette } from "./cmd-palette";
+import { ToastHost } from "./toast-host";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { PrimaryActionProvider, PrimarySearchProvider } from "@/lib/shortcut-contexts";
 import { useModeMigrationToast } from "@/hooks/use-mode-migration-toast";
@@ -46,6 +47,7 @@ function ShellInner() {
       </div>
       <CmdBar onOpenPalette={() => setPaletteOpen(true)} />
       <CmdPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ToastHost />
       <NewSkillDialog
         open={newSkillOpen}
         onClose={() => setNewSkillOpen(false)}
