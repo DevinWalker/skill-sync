@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCopy } from "@/hooks/use-copy";
+import { strings } from "@/lib/copy";
 import { useSkills } from "@/hooks/use-skills";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
@@ -43,7 +43,6 @@ function classify(
 }
 
 export function HomePage() {
-  const c = useCopy();
   const nav = useNavigate();
   const { data: skills = [] } = useSkills();
   const { data: drift = {} } = useDrift();
@@ -81,7 +80,7 @@ export function HomePage() {
       <div className="mb-6 flex items-start justify-between gap-6">
         <div>
           <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-faint)]">
-            {c.homeCrumb}
+            {strings.homeCrumb}
           </p>
           <h1 className="text-[28px] font-semibold tracking-[-0.02em]">
             {h1}
@@ -109,7 +108,7 @@ export function HomePage() {
                 disabled={planMut.isPending || skills.length === 0}
                 className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105 disabled:opacity-50"
               >
-                {planMut.isPending ? "Drafting…" : `${c.syncEverythingButton} ↵`}
+                {planMut.isPending ? "Drafting…" : `${strings.syncEverythingButton} ↵`}
               </button>
               <button
                 type="button"
@@ -125,13 +124,13 @@ export function HomePage() {
 
       {/* Status strip */}
       <div className="grid grid-cols-4 rounded-lg border border-[var(--border)] bg-[var(--card)] divide-x divide-[var(--border)]">
-        <Cell label={c.statusInSync} value={`${counts.inSync} skills`} onClick={() => nav("/library?filter=mine")} />
-        <Cell label={c.statusOutOfSync} value={`${counts.outOfSync} skills`} onClick={() => nav("/library?filter=out-of-sync")} />
-        <Cell label={c.statusNeedsClaiming} value={`${counts.orphans} skills`} onClick={() => nav("/library?filter=orphan")} />
-        <Cell label={c.statusUnknown} value={`${counts.unknown} skills`} onClick={() => nav("/library?filter=unknown")} />
+        <Cell label={strings.statusInSync} value={`${counts.inSync} skills`} onClick={() => nav("/library?filter=mine")} />
+        <Cell label={strings.statusOutOfSync} value={`${counts.outOfSync} skills`} onClick={() => nav("/library?filter=out-of-sync")} />
+        <Cell label={strings.statusNeedsClaiming} value={`${counts.orphans} skills`} onClick={() => nav("/library?filter=orphan")} />
+        <Cell label={strings.statusUnknown} value={`${counts.unknown} skills`} onClick={() => nav("/library?filter=unknown")} />
       </div>
       {counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0 && skills.length > 0 ? (
-        <p className="mt-6 font-mono text-[11px] text-[var(--fg-dim)]">{c.nothingToTend}</p>
+        <p className="mt-6 font-mono text-[11px] text-[var(--fg-dim)]">{strings.nothingToTend}</p>
       ) : (
         <NeedsAttentionCard orphans={orphans} onClaim={claim} onRemove={removeFromTarget} />
       )}
