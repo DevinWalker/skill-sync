@@ -63,7 +63,10 @@ mod tests {
     use std::process::Command;
 
     fn git(td: &TempDir, args: &[&str]) {
+        // Disable commit signing inline so locally-configured signers
+        // (e.g. 1Password) don't break the subprocess in test runs.
         let out = Command::new("git")
+            .args(["-c", "commit.gpgsign=false"])
             .args(args)
             .current_dir(td.path())
             .output()
