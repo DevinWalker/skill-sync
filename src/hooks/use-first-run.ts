@@ -12,7 +12,6 @@ export function useFirstRun() {
       ...settings,
       ...overrides,
       first_run_completed: true,
-      mode: "simple",
       mode_migration_announced: true, // suppress the migration toast on fresh installs
     });
   };
