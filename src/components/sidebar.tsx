@@ -100,7 +100,9 @@ export function Sidebar() {
         <div className="px-2.5 font-mono text-[10.5px] text-fg-faint leading-relaxed">
           <div className="flex justify-between"><span>last sync</span><span className="text-muted-foreground">—</span></div>
           <div className="flex justify-between"><span>archive</span><span className="text-muted-foreground">~/.Trash</span></div>
-          <div className="flex justify-between"><span>build</span><span className="text-muted-foreground">{BUILD_SHA}</span></div>
+          {mode === "pro" && (
+            <div className="flex justify-between"><span>build</span><span className="text-muted-foreground">{BUILD_SHA}</span></div>
+          )}
         </div>
       </div>
     </nav>
