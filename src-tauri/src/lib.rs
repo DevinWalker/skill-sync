@@ -20,6 +20,7 @@ use ipc::commands::{
 };
 use ipc::skills_scaffold::cmd_scaffold_skill;
 use ipc::git_status::cmd_git_status;
+use ipc::remove_from_target::cmd_remove_from_target;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -50,6 +51,7 @@ pub fn run() {
             cmd_read_audit,
             cmd_scaffold_skill,
             cmd_git_status,
+            cmd_remove_from_target,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
