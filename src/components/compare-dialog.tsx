@@ -32,8 +32,8 @@ export function CompareDialog({
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--popover)] p-5">
+        <Dialog.Overlay className="modal-overlay fixed inset-0 bg-black/60" />
+        <Dialog.Content className="modal-content fixed left-1/2 top-1/2 z-50 w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--popover)] p-5">
           <Dialog.Title className="mb-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-dim)]">
             Compare with {toolLabel}
           </Dialog.Title>

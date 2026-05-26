@@ -268,8 +268,8 @@ export function LibraryPage() {
       />
       <AlertDialog.Root open={!!removeTarget} onOpenChange={(v) => !v && setRemoveTarget(null)}>
         <AlertDialog.Portal>
-          <AlertDialog.Overlay className="fixed inset-0 bg-black/60 z-40" />
-          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--popover)] p-5">
+          <AlertDialog.Overlay className="modal-overlay fixed inset-0 bg-black/60 z-40" />
+          <AlertDialog.Content className="modal-content fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--popover)] p-5">
             <AlertDialog.Title className="font-display text-lg text-[var(--foreground)]">
               Remove {removeTarget?.skill} from {removeTarget?.tool}?
             </AlertDialog.Title>
@@ -316,7 +316,7 @@ function Stat({ k, v, d, extra, tone }: { k: string; v: number; d?: string; extr
         "mt-1.5 font-display text-2xl tabular-nums leading-none",
         tone === "warn" ? "text-warning" : tone === "bad" ? "text-destructive" : "text-foreground"
       )}>
-        {String(v).padStart(2, "0")}
+        {v}
       </div>
       <div className="mt-2 font-mono text-[11px] text-muted-foreground flex items-center gap-2">
         {d}

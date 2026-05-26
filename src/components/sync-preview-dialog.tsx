@@ -39,7 +39,7 @@ export function SyncPreviewDialog({
           <div className="mt-3 grid grid-cols-4 gap-4">
             {(Object.keys(counts) as PlanAction[]).map((k) => (
               <div key={k}>
-                <div className="font-display text-xl tabular-nums leading-none text-foreground">{String(counts[k]).padStart(2, "0")}</div>
+                <div className="font-display text-xl tabular-nums leading-none text-foreground">{counts[k]}</div>
                 <div className="mt-1.5"><Badge variant={ACTION_TONE[k]}>{k}</Badge></div>
               </div>
             ))}

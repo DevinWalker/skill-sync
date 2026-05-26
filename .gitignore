@@ -34,3 +34,6 @@ src-tauri/gen/schemas
 
 # Worktrees
 .worktrees/
+
+# Claude Code preview / launch config
+.claude/

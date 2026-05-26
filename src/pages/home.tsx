@@ -71,8 +71,14 @@ export function HomePage() {
     showPrimary = false;
   } else if (counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0) {
     h1 = `Your ${skills.length} skills are in sync across ${targets.length} tools.`;
+  } else if (counts.outOfSync > 0 && counts.orphans > 0) {
+    h1 = `${counts.outOfSync} of your ${skills.length} skills are out of sync. ${counts.orphans} live in tools but not in your source.`;
+  } else if (counts.outOfSync > 0) {
+    h1 = `${counts.outOfSync} of your ${skills.length} skills are out of sync.`;
+  } else if (counts.orphans > 0) {
+    h1 = `${counts.orphans} of your skills live in tools but not in your source.`;
   } else {
-    h1 = `${counts.inSync} of your ${skills.length} skills are in sync. ${counts.outOfSync} out of sync, ${counts.orphans} not in your source.`;
+    h1 = `${counts.unknown} of your ${skills.length} skills need a class tag.`;
   }
 
   return (
@@ -89,12 +95,12 @@ export function HomePage() {
             last scan · source {settings?.source_root ?? "—"}
           </p>
         </div>
-        <div className="flex items-center gap-2 pt-6">
+        <div className="flex items-center gap-2 pt-6 shrink-0">
           {!showPrimary ? (
             <button
               type="button"
               onClick={() => setNewSkillOpen(true)}
-              className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105"
+              className="whitespace-nowrap rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105"
             >
               + Create your first skill
             </button>
@@ -106,14 +112,14 @@ export function HomePage() {
                   planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })
                 }
                 disabled={planMut.isPending || skills.length === 0}
-                className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105 disabled:opacity-50"
+                className="whitespace-nowrap rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105 disabled:opacity-50"
               >
                 {planMut.isPending ? "Drafting…" : `${strings.syncEverythingButton} ↵`}
               </button>
               <button
                 type="button"
                 onClick={() => setNewSkillOpen(true)}
-                className="rounded-md border border-[var(--border)] px-3.5 py-1.5 text-[12.5px] font-medium hover:bg-[var(--bg-hover)]"
+                className="whitespace-nowrap rounded-md border border-[var(--border)] px-3.5 py-1.5 text-[12.5px] font-medium hover:bg-[var(--bg-hover)]"
               >
                 + New skill
               </button>
