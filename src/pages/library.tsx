@@ -11,6 +11,8 @@ import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { usePlanSync } from "@/hooks/use-sync";
 import { useDriftRefresh } from "@/hooks/use-drift-refresh";
+import { useCopy } from "@/hooks/use-copy";
+import { useMode } from "@/hooks/use-mode";
 import { bucketArchivesByDay } from "@/lib/audit";
 import { ipc } from "@/lib/ipc";
 import type { AuditEntry, DriftStatus, SyncPlan } from "@/types/bindings";
@@ -31,6 +33,8 @@ export function LibraryPage() {
   const ownership = useOwnership();
   const drift = useDrift();
   const { data: settings } = useSettings();
+  const c = useCopy();
+  const mode = useMode();
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const planMut = usePlanSync();
   const [filter, setFilter] = useState("");
@@ -90,21 +94,31 @@ export function LibraryPage() {
   return (
     <div className="console-rise">
       <div className="px-8 pt-7">
-        <div className="font-mono text-[11px] text-fg-faint flex items-center gap-1.5 mb-3">
-          <span>{(settings?.source_root ?? "~/.claude/skills").replace(/^.*\/Users\/[^/]+/, "~")}</span>
-          <span>›</span>
-          <span className="text-muted-foreground">library</span>
+        <div className="font-mono text-[11px] text-fg-faint mb-3">
+          {c.libraryCrumb((settings?.source_root ?? "~/.claude/skills").replace(/^.*\/Users\/[^/]+/, "~"))}
         </div>
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h1 className="font-display text-2xl text-foreground">Library</h1>
+            <h1 className="font-display text-2xl text-foreground">{c.libraryTitle}</h1>
             <div className="font-mono text-xs text-fg-dim mt-1.5">
-              <span className="text-foreground">{counts.total}</span> skills ·{" "}
-              <span className="text-foreground">{settings?.enabled_targets?.length ?? 0}</span> targets ·{" "}
-              <span className={counts.drifted ? "text-warning" : "text-foreground"}>{counts.drifted} drifting</span>
+              {c.librarySubhead(
+                counts.total,
+                settings?.enabled_targets?.length ?? 0,
+                mode === "simple" ? counts.drifted + counts.unknown : counts.drifted,
+                "—",
+              )}
             </div>
           </div>
           <div className="flex gap-2">
+            {mode === "simple" && (
+              <button
+                type="button"
+                onClick={() => alert("Coming soon")}
+                className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
+              >
+                + New skill
+              </button>
+            )}
             <button
               onClick={() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })}
               disabled={planMut.isPending}
