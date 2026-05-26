@@ -8,10 +8,23 @@ import { CmdBar } from "./cmd-bar";
 import { CmdPalette } from "./cmd-palette";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { PrimaryActionProvider, PrimarySearchProvider } from "@/lib/shortcut-contexts";
+import { useModeMigrationToast } from "@/hooks/use-mode-migration-toast";
 
 function ShellInner() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [migrationToast, setMigrationToast] = useState<{
+    msg: string;
+    try: () => void;
+    stay: () => void;
+  } | null>(null);
+
   useGlobalShortcuts({ onOpenPalette: () => setPaletteOpen(true) });
+  useModeMigrationToast((msg, actions) =>
+    setMigrationToast(
+      actions ? { msg, try: actions.try, stay: actions.stay } : null,
+    ),
+  );
+
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
       <TitleBar />
@@ -23,6 +36,32 @@ function ShellInner() {
       </div>
       <CmdBar onOpenPalette={() => setPaletteOpen(true)} />
       <CmdPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      {migrationToast && (
+        <div
+          role="status"
+          className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--popover)] px-4 py-2.5 text-[12.5px] shadow-lg"
+        >
+          <span>{migrationToast.msg}</span>
+          <button
+            onClick={() => {
+              migrationToast.try();
+              setMigrationToast(null);
+            }}
+            className="font-mono text-[11px] text-[var(--primary)]"
+          >
+            Try Simple
+          </button>
+          <button
+            onClick={() => {
+              migrationToast.stay();
+              setMigrationToast(null);
+            }}
+            className="font-mono text-[11px] text-[var(--fg-dim)]"
+          >
+            Stay in Pro
+          </button>
+        </div>
+      )}
     </div>
   );
 }
