@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import { useMode } from "@/hooks/use-mode";
-import { useCopy } from "@/hooks/use-copy";
 import { ipc } from "@/lib/ipc";
 import { applyTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { pickAndSaveSourceFolder } from "@/lib/pick-source-folder";
+import { strings } from "@/lib/copy";
 import type { Settings } from "@/types/bindings";
 import packageJson from "../../package.json";
-import { ModeSwitch } from "./mode-switch";
 import { GitStatusChip } from "./git-status-chip";
 
 const TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
@@ -37,8 +35,6 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 export function SettingsForm() {
   const { data, refetch } = useSettings();
   const [busy, setBusy] = useState(false);
-  const mode = useMode();
-  const c = useCopy();
 
   if (!data) return <div className="px-8 py-12 eyebrow">Loading…</div>;
 
@@ -58,10 +54,6 @@ export function SettingsForm() {
 
   return (
     <div className="px-8 pb-12 max-w-3xl">
-      <Section title="Mode">
-        <ModeSwitch />
-      </Section>
-
       <Section title="Source">
         <Row label="Source root" hint="Where you author skills. Used as the source of truth for syncs.">
           <div className="flex gap-2">
@@ -117,21 +109,19 @@ export function SettingsForm() {
         ))}
       </Section>
 
-      {mode === "pro" && (
-        <Section title="Packaging">
-          <Row label="Package output dir" hint="Where .skill zips are written when you build for Cowork.">
-            <input
-              value={data.package_output_dir}
-              onChange={(e) => update({ package_output_dir: e.target.value })}
-              className="w-full h-8 px-3 bg-card border border-border rounded-md font-mono text-[12.5px] text-foreground"
-              disabled={busy}
-            />
-          </Row>
-          <Row label="Cowork packaging" hint="Enable building .skill zips for Cowork.">
-            <Toggle on={data.cowork_package_enabled} onClick={() => update({ cowork_package_enabled: !data.cowork_package_enabled })} disabled={busy} />
-          </Row>
-        </Section>
-      )}
+      <Section title="Packaging">
+        <Row label="Package output dir" hint="Where .skill zips are written when you build for Cowork.">
+          <input
+            value={data.package_output_dir}
+            onChange={(e) => update({ package_output_dir: e.target.value })}
+            className="w-full h-8 px-3 bg-card border border-border rounded-md font-mono text-[12.5px] text-foreground"
+            disabled={busy}
+          />
+        </Row>
+        <Row label="Cowork packaging" hint="Enable building .skill zips for Cowork.">
+          <Toggle on={data.cowork_package_enabled} onClick={() => update({ cowork_package_enabled: !data.cowork_package_enabled })} disabled={busy} />
+        </Row>
+      </Section>
 
       <Section title="Appearance">
         <Row label="Theme" hint="System follows your OS preference.">
@@ -153,40 +143,18 @@ export function SettingsForm() {
         </Row>
       </Section>
 
-      {mode === "simple" ? (
-        <Section title="Diagnostics">
-          <details>
-            <summary className="cursor-pointer text-[12.5px]">
-              {c.diagnosticsCollapsedRow}
-            </summary>
-            <div className="mt-3 space-y-2">
-              <Row label="Build" hint="App version.">
-                <span className="font-mono text-[12px] text-muted-foreground">
-                  v{packageJson.version}
-                </span>
-              </Row>
-              <Row label={c.diagnosticsAuditRowLabel} hint="Settings, ownership, targets, and history live here.">
-                <span className="font-mono text-[11.5px] text-muted-foreground break-all">
-                  ~/Library/Application Support/skill-sync
-                </span>
-              </Row>
-            </div>
-          </details>
-        </Section>
-      ) : (
-        <Section title="Diagnostics">
-          <Row label="Build" hint="Git short-sha and app version.">
-            <span className="font-mono text-[12px] text-muted-foreground">
-              v{packageJson.version} · {import.meta.env.VITE_BUILD_SHA as string}
-            </span>
-          </Row>
-          <Row label={c.diagnosticsAuditRowLabel} hint="Settings, ownership, targets, and audit log live here.">
-            <span className="font-mono text-[11.5px] text-muted-foreground break-all">
-              ~/Library/Application Support/skill-sync
-            </span>
-          </Row>
-        </Section>
-      )}
+      <Section title="Diagnostics">
+        <Row label="Build" hint="Git short-sha and app version.">
+          <span className="font-mono text-[12px] text-muted-foreground">
+            v{packageJson.version} · {import.meta.env.VITE_BUILD_SHA as string}
+          </span>
+        </Row>
+        <Row label={strings.diagnosticsAuditRowLabel} hint="Settings, ownership, targets, and audit log live here.">
+          <span className="font-mono text-[11.5px] text-muted-foreground break-all">
+            ~/Library/Application Support/skill-sync
+          </span>
+        </Row>
+      </Section>
     </div>
   );
 }
