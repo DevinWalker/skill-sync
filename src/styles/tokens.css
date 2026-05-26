@@ -203,6 +203,25 @@ code, .mono, .font-mono {
 
 ::selection { background: color-mix(in oklch, var(--primary) 30%, transparent); color: var(--foreground); }
 
+/* Centered modal: fade + subtle scale. Preserves translate(-50%, -50%)
+   so the dialog stays centered through the whole animation — no diagonal
+   drift. Used by every Radix Dialog / AlertDialog in the app. */
+@keyframes modal-enter {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes modal-exit {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
+}
+@keyframes overlay-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-exit  { from { opacity: 1; } to { opacity: 0; } }
+
+.modal-content[data-state="open"]   { animation: modal-enter 180ms cubic-bezier(.16, 1, .3, 1); }
+.modal-content[data-state="closed"] { animation: modal-exit 140ms ease-in; }
+.modal-overlay[data-state="open"]   { animation: overlay-enter 180ms ease-out; }
+.modal-overlay[data-state="closed"] { animation: overlay-exit 140ms ease-in; }
+
 @media (prefers-reduced-motion: reduce) {
   .console-rise { animation: none; opacity: 1; transform: none; }
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }

@@ -13,3 +13,4 @@ export function useSetSettings() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings"] }),
   });
 }
+

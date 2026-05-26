@@ -31,3 +31,9 @@ dist-ssr
 
 # Tauri-generated
 src-tauri/gen/schemas
+
+# Worktrees
+.worktrees/
+
+# Claude Code preview / launch config
+.claude/

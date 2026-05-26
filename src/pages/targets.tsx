@@ -1,5 +1,13 @@
 import { TargetCard } from "@/components/target-card";
 import { useSettings } from "@/hooks/use-settings";
+import { strings } from "@/lib/copy";
+
+const TOOL_LABELS: Record<string, string> = {
+  claude: "Claude Code",
+  codex: "Codex",
+  cursor: "Cursor",
+  cowork: "Cowork (zip)",
+};
 
 export function TargetsPage() {
   const { data: settings } = useSettings();
@@ -13,18 +21,16 @@ export function TargetsPage() {
     { name: "cursor", path: home ? `${home}/.cursor/skills` : undefined, kind: "directory-mirror" as const },
     { name: "cowork", path: undefined, kind: "package-only" as const },
   ];
-  const enabledCount = settings?.enabled_targets?.length ?? 0;
 
   return (
     <div className="console-rise">
       <div className="px-8 pt-7">
-        <div className="font-mono text-[11px] text-fg-faint flex items-center gap-1.5 mb-3">
-          <span>~</span><span>›</span><span className="text-muted-foreground">targets</span>
+        <div className="font-mono text-[11px] text-fg-faint mb-3">
+          {strings.targetsCrumb}
         </div>
-        <h1 className="font-display text-2xl">Targets</h1>
+        <h1 className="font-display text-2xl">{strings.targetsTitle}</h1>
         <div className="font-mono text-xs text-fg-dim mt-1.5">
-          <span className="text-foreground">{cards.length}</span> cabinets ·{" "}
-          <span className="text-foreground">{enabledCount}</span> enabled · 3 directory mirrors · 1 package
+          {cards.map((t) => TOOL_LABELS[t.name] ?? t.name).join(" · ")}
         </div>
       </div>
       <div className="px-8 mt-6 pb-12 grid grid-cols-2 gap-4">

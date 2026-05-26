@@ -1,32 +1,40 @@
 import { NavLink } from "react-router-dom";
-import { LayoutGrid, Boxes, Clock, Package } from "lucide-react";
+import { Home as HomeIcon, LayoutGrid, Boxes, Clock, Package, Settings as SettingsIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "@/hooks/use-settings";
 import { useSkills } from "@/hooks/use-skills";
+import { strings } from "@/lib/copy";
 import { cn } from "@/lib/utils";
+import { GitStatusChip } from "./git-status-chip";
+import { pickAndSaveSourceFolder } from "@/lib/pick-source-folder";
+import { toast } from "@/store/toast-store";
 
 const BUILD_SHA = import.meta.env.VITE_BUILD_SHA as string;
-
-const ITEMS = [
-  { to: "/",         label: "Library",  Icon: LayoutGrid },
-  { to: "/targets",  label: "Targets",  Icon: Boxes },
-  { to: "/activity", label: "Activity", Icon: Clock },
-  { to: "/settings", label: "Settings", Icon: Package }, // Settings as last; Packages is a future view
-] as const;
 
 const ALL_TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
 export function Sidebar() {
   const { data: settings } = useSettings();
   const skills = useSkills();
+  const qc = useQueryClient();
   const sourceRoot = settings?.source_root ?? "—";
   const enabled = new Set(settings?.enabled_targets ?? []);
   const skillCount = skills.data?.length ?? 0;
+
+  const items = [
+    { to: "/",         label: "Home",                Icon: HomeIcon },
+    { to: "/library",  label: strings.libraryTitle,  Icon: LayoutGrid },
+    { to: "/targets",  label: strings.targetsTitle,  Icon: Boxes },
+    { to: "/activity", label: strings.historyTitle,  Icon: Clock },
+    { to: "/packages", label: "Packages",            Icon: Package },
+    { to: "/settings", label: "Settings",            Icon: SettingsIcon },
+  ];
 
   return (
     <nav className="w-[220px] shrink-0 border-r border-border h-full flex flex-col bg-background">
       <div className="px-3 pt-4 pb-2">
         <div className="eyebrow px-2.5 pb-1.5">Workspace</div>
-        {ITEMS.map((item) => (
+        {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -47,7 +55,7 @@ export function Sidebar() {
                   <span>{item.label}</span>
                 </span>
                 <span className={cn("font-mono text-[10.5px]", isActive ? "text-primary" : "text-fg-faint")}>
-                  {item.label === "Library" ? skillCount : ""}
+                  {item.to === "/library" ? skillCount : ""}
                 </span>
               </>
             )}
@@ -60,9 +68,24 @@ export function Sidebar() {
         <div className="px-2.5 py-1 font-mono text-[11.5px] text-muted-foreground truncate" title={sourceRoot}>
           {sourceRoot.replace(/^.*\/Users\/[^/]+/, "~")}
         </div>
-        <NavLink to="/settings" className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground">
+        <div className="px-2.5 mt-1.5">
+          <GitStatusChip />
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            if (!settings) return;
+            try {
+              const next = await pickAndSaveSourceFolder(settings);
+              if (next) qc.invalidateQueries({ queryKey: ["settings"] });
+            } catch (e) {
+              toast.error(`Couldn't change source: ${e}`);
+            }
+          }}
+          className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground text-left w-full"
+        >
           + change source
-        </NavLink>
+        </button>
       </div>
 
       <div className="px-3 pt-4 pb-2">

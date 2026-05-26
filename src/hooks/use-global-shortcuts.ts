@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePrimaryAction, usePrimarySearch } from "@/lib/shortcut-contexts";
+import { usePrimaryAction, usePrimarySearch, usePreviewAction } from "@/lib/shortcut-contexts";
+import { useUIState } from "@/store/ui-state";
 
 const SEQUENCE_TIMEOUT_MS = 1200;
 
@@ -8,6 +9,8 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
   const navigate = useNavigate();
   const search = usePrimarySearch();
   const action = usePrimaryAction();
+  const preview = usePreviewAction();
+  const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
   const pendingG = useRef<number | null>(null);
 
   useEffect(() => {
@@ -41,6 +44,20 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
         return;
       }
 
+      // ⌘N — new skill dialog
+      if (meta && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setNewSkillOpen(true);
+        return;
+      }
+
+      // ⌘P — preview (read-only sync plan)
+      if (meta && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        preview.trigger();
+        return;
+      }
+
       // Esc — close drawer/dialog handled by Radix/Sheet; no global handler needed.
 
       // From here on, ignore if the user is typing.
@@ -62,7 +79,8 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
       if (pendingG.current !== null && !meta && !e.altKey && !e.shiftKey) {
         clearPending();
         switch (e.key.toLowerCase()) {
-          case "l": e.preventDefault(); navigate("/"); return;
+          case "h": e.preventDefault(); navigate("/"); return;
+          case "l": e.preventDefault(); navigate("/library"); return;
           case "t": e.preventDefault(); navigate("/targets"); return;
           case "a": e.preventDefault(); navigate("/activity"); return;
           case "s": e.preventDefault(); navigate("/settings"); return;
@@ -75,5 +93,5 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
       window.removeEventListener("keydown", handler);
       clearPending();
     };
-  }, [onOpenPalette, navigate, search, action]);
+  }, [onOpenPalette, navigate, search, action, preview, setNewSkillOpen]);
 }

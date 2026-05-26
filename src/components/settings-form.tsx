@@ -3,8 +3,11 @@ import { useSettings } from "@/hooks/use-settings";
 import { ipc } from "@/lib/ipc";
 import { applyTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { pickAndSaveSourceFolder } from "@/lib/pick-source-folder";
+import { strings } from "@/lib/copy";
 import type { Settings } from "@/types/bindings";
 import packageJson from "../../package.json";
+import { GitStatusChip } from "./git-status-chip";
 
 const TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
@@ -53,15 +56,35 @@ export function SettingsForm() {
     <div className="px-8 pb-12 max-w-3xl">
       <Section title="Source">
         <Row label="Source root" hint="Where you author skills. Used as the source of truth for syncs.">
-          <input
-            value={data.source_root}
-            onChange={(e) => update({ source_root: e.target.value })}
-            className="w-full h-8 px-3 bg-card border border-border rounded-md font-mono text-[12.5px] text-foreground"
-            disabled={busy}
-          />
+          <div className="flex gap-2">
+            <input
+              value={data.source_root}
+              onChange={(e) => update({ source_root: e.target.value })}
+              className="flex-1 h-8 px-3 bg-card border border-border rounded-md font-mono text-[12.5px] text-foreground"
+              disabled={busy}
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const next = await pickAndSaveSourceFolder(data);
+                  if (next) await refetch();
+                } catch {
+                  /* cancellation or already-toasted error */
+                }
+              }}
+              disabled={busy}
+              className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50 whitespace-nowrap"
+            >
+              Choose folder…
+            </button>
+          </div>
         </Row>
         <Row label="Show built-ins" hint="Display skills that come from anthropic-skills bundles.">
           <Toggle on={data.show_builtins} onClick={() => update({ show_builtins: !data.show_builtins })} disabled={busy} />
+        </Row>
+        <Row label="Branch / status" hint="Skill Sync only watches. Use your git client to commit and push.">
+          <GitStatusChip />
         </Row>
       </Section>
 
@@ -126,7 +149,7 @@ export function SettingsForm() {
             v{packageJson.version} · {import.meta.env.VITE_BUILD_SHA as string}
           </span>
         </Row>
-        <Row label="Config directory" hint="Settings, ownership, targets, and audit log live here.">
+        <Row label={strings.diagnosticsAuditRowLabel} hint="Settings, ownership, targets, and audit log live here.">
           <span className="font-mono text-[11.5px] text-muted-foreground break-all">
             ~/Library/Application Support/skill-sync
           </span>

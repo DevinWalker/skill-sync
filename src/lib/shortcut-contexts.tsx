@@ -72,3 +72,31 @@ export function usePrimaryAction(): PrimaryActionValue {
   if (!v) throw new Error("usePrimaryAction must be used inside PrimaryActionProvider");
   return v;
 }
+
+// — PreviewActionContext ——————————————————————————————
+// Pages register the handler for ⌘P. Library: open read-only sync plan.
+
+interface PreviewActionValue {
+  setAction: (fn: (() => void) | null) => void;
+  trigger: () => void;
+}
+
+const PreviewActionCtx = createContext<PreviewActionValue | null>(null);
+
+export function PreviewActionProvider({ children }: { children: ReactNode }) {
+  const fnRef = useRef<(() => void) | null>(null);
+  const value = useMemo<PreviewActionValue>(
+    () => ({
+      setAction: (next) => { fnRef.current = next; },
+      trigger: () => { fnRef.current?.(); },
+    }),
+    []
+  );
+  return <PreviewActionCtx.Provider value={value}>{children}</PreviewActionCtx.Provider>;
+}
+
+export function usePreviewAction(): PreviewActionValue {
+  const v = useContext(PreviewActionCtx);
+  if (!v) throw new Error("usePreviewAction must be used inside PreviewActionProvider");
+  return v;
+}

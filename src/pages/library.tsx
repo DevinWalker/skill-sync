@@ -1,29 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { toast } from "@/store/toast-store";
+import { useSearchParams } from "react-router-dom";
 import { LibraryTable } from "@/components/library-table";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
 import { SkillDetailDrawer } from "@/components/skill-detail-drawer";
 import { Sparkline } from "@/components/sparkline";
 import { Kbd } from "@/components/ui/kbd";
-import { usePrimaryAction, usePrimarySearch } from "@/lib/shortcut-contexts";
+import { usePrimaryAction, usePrimarySearch, usePreviewAction } from "@/lib/shortcut-contexts";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
-import { usePlanSync } from "@/hooks/use-sync";
+import { usePlanSync, usePullBack, useRemoveFromTarget } from "@/hooks/use-sync";
 import { useDriftRefresh } from "@/hooks/use-drift-refresh";
+import { strings } from "@/lib/copy";
 import { bucketArchivesByDay } from "@/lib/audit";
+import { deriveOrphans, type Orphan } from "@/lib/orphans";
+import { OrphanRow } from "@/components/orphan-row";
 import { ipc } from "@/lib/ipc";
 import type { AuditEntry, DriftStatus, SyncPlan } from "@/types/bindings";
 import { cn } from "@/lib/utils";
+import { useUIState } from "@/store/ui-state";
 
-type OwnershipFilter = "all" | "mine" | "bundle" | "builtin" | "unknown";
-const FILTERS: { id: OwnershipFilter; label: string }[] = [
-  { id: "all",     label: "All" },
-  { id: "mine",    label: "Mine" },
-  { id: "bundle",  label: "Bundle" },
-  { id: "builtin", label: "Built-in" },
-  { id: "unknown", label: "Unknown" },
-];
+type OwnershipFilter = "all" | "mine" | "bundle" | "builtin" | "unknown" | "out-of-sync" | "orphan";
 
 export function LibraryPage() {
   useDriftRefresh();
@@ -31,23 +32,85 @@ export function LibraryPage() {
   const ownership = useOwnership();
   const drift = useDrift();
   const { data: settings } = useSettings();
-  const [plan, setPlan] = useState<SyncPlan | null>(null);
+  const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
+
+  const FILTERS: { id: OwnershipFilter; label: string }[] = [
+    { id: "all",         label: "All" },
+    { id: "mine",        label: "Mine" },
+    { id: "bundle",      label: "Bundle" },
+    { id: "builtin",     label: "Built-in" },
+    { id: "unknown",     label: "Unknown" },
+    { id: "out-of-sync", label: "Out of sync" },
+  ];
+
+  const [searchParams] = useSearchParams();
+  const urlFilter = searchParams.get("filter");
+
+  const [plan, setPlan] = useState<{ data: SyncPlan; readOnly: boolean } | null>(null);
   const planMut = usePlanSync();
+  const pullBack = usePullBack();
+  const orphans = useMemo(
+    () => deriveOrphans(skills.data ?? [], drift.data ?? {}),
+    [skills.data, drift.data]
+  );
+  const claim = (o: Orphan) => pullBack.mutate({ skill: o.name, target: o.tools[0] });
+  const [removeTarget, setRemoveTarget] = useState<{ skill: string; tool: string } | null>(null);
+  const removeMut = useRemoveFromTarget();
+
+  const removeFromTarget = (name: string, tool: string) =>
+    setRemoveTarget({ skill: name, tool });
+
+  const confirmRemove = () => {
+    if (!removeTarget) return;
+    const { skill, tool } = removeTarget;
+    removeMut.mutate({ skill, target: tool }, {
+      onSuccess: ({ archived_to }) => {
+        toast.success(
+          `Removed ${skill} from ${tool}`,
+          { label: "Reveal archive", onClick: () => revealItemInDir(String(archived_to)).catch(() => {}) },
+        );
+        setRemoveTarget(null);
+      },
+      onError: (err) => {
+        toast.error(`Couldn't remove: ${err}`);
+        setRemoveTarget(null);
+      },
+    });
+  };
   const [filter, setFilter] = useState("");
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>("all");
   const searchRef = useRef<HTMLInputElement | null>(null);
   const search = usePrimarySearch();
   const action = usePrimaryAction();
+  const preview = usePreviewAction();
   const [archiveEntries, setArchiveEntries] = useState<AuditEntry[]>([]);
+
+  const runPreview = () =>
+    planMut.mutate(undefined, { onSuccess: (p) => setPlan({ data: p, readOnly: true }) });
+  const runSync = () =>
+    planMut.mutate(undefined, { onSuccess: (p) => setPlan({ data: p, readOnly: false }) });
 
   useEffect(() => {
     search.register(searchRef);
   }, [search]);
 
   useEffect(() => {
-    action.setAction(() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) }), "Sync mine");
+    action.setAction(runSync, "Sync mine");
     return () => action.setAction(null);
   }, [action, planMut]);
+
+  useEffect(() => {
+    preview.setAction(runPreview);
+    return () => preview.setAction(null);
+  }, [preview, planMut]);
+
+  useEffect(() => {
+    if (!urlFilter) return;
+    const valid = ["all", "mine", "bundle", "builtin", "unknown", "out-of-sync", "orphan"] as const;
+    if ((valid as readonly string[]).includes(urlFilter)) {
+      setOwnershipFilter(urlFilter as OwnershipFilter);
+    }
+  }, [urlFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,30 +153,38 @@ export function LibraryPage() {
   return (
     <div className="console-rise">
       <div className="px-8 pt-7">
-        <div className="font-mono text-[11px] text-fg-faint flex items-center gap-1.5 mb-3">
-          <span>{(settings?.source_root ?? "~/.claude/skills").replace(/^.*\/Users\/[^/]+/, "~")}</span>
-          <span>›</span>
-          <span className="text-muted-foreground">library</span>
+        <div className="font-mono text-[11px] text-fg-faint mb-3">
+          {strings.libraryCrumb((settings?.source_root ?? "~/.claude/skills").replace(/^.*\/Users\/[^/]+/, "~"))}
         </div>
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h1 className="font-display text-2xl text-foreground">Library</h1>
+            <h1 className="font-display text-2xl text-foreground">{strings.libraryTitle}</h1>
             <div className="font-mono text-xs text-fg-dim mt-1.5">
-              <span className="text-foreground">{counts.total}</span> skills ·{" "}
-              <span className="text-foreground">{settings?.enabled_targets?.length ?? 0}</span> targets ·{" "}
-              <span className={counts.drifted ? "text-warning" : "text-foreground"}>{counts.drifted} drifting</span>
+              {strings.librarySubhead(
+                counts.total,
+                settings?.enabled_targets?.length ?? 0,
+                counts.drifted,
+                "—",
+              )}
             </div>
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })}
+              type="button"
+              onClick={() => setNewSkillOpen(true)}
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
+            >
+              + New skill
+            </button>
+            <button
+              onClick={runPreview}
               disabled={planMut.isPending}
               className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
             >
               Preview <Kbd>⌘</Kbd><Kbd>P</Kbd>
             </button>
             <button
-              onClick={() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })}
+              onClick={runSync}
               disabled={planMut.isPending}
               className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-primary text-primary-foreground border border-primary text-[12.5px] font-medium hover:brightness-105 shadow-[0_8px_24px_-8px_var(--accent-glow)]"
             >
@@ -169,21 +240,71 @@ export function LibraryPage() {
         </div>
       </div>
 
+      {orphans.length > 0 && (
+        <section className="px-8 mb-4">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <h2 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-dim)]">
+              {orphans.length} skill{orphans.length === 1 ? "" : "s"} in your tools isn't in your source
+            </h2>
+            {orphans.map((o) => (
+              <OrphanRow
+                key={o.name}
+                orphan={o}
+                onClaim={() => claim(o)}
+                onRemove={(t) => removeFromTarget(o.name, t)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <LibraryTable filter={filter} ownershipFilter={ownershipFilter} />
 
-      <SyncPreviewDialog plan={plan} open={!!plan} onOpenChange={(v) => !v && setPlan(null)} />
+      <SyncPreviewDialog
+        plan={plan?.data ?? null}
+        readOnly={plan?.readOnly ?? false}
+        open={!!plan}
+        onOpenChange={(v) => !v && setPlan(null)}
+      />
+      <AlertDialog.Root open={!!removeTarget} onOpenChange={(v) => !v && setRemoveTarget(null)}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="modal-overlay fixed inset-0 bg-black/60 z-40" />
+          <AlertDialog.Content className="modal-content fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--popover)] p-5">
+            <AlertDialog.Title className="font-display text-lg text-[var(--foreground)]">
+              Remove {removeTarget?.skill} from {removeTarget?.tool}?
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mt-2 text-[13px] text-[var(--muted-foreground)]">
+              Skill Sync will move it to ~/.Trash/skill-sync-archive first so you can restore it from Finder.
+            </AlertDialog.Description>
+            <div className="mt-5 flex justify-end gap-2">
+              <AlertDialog.Cancel className="rounded-md border border-[var(--border)] px-3 py-1.5 text-[12.5px] hover:bg-[var(--bg-hover)]">
+                Cancel
+              </AlertDialog.Cancel>
+              <AlertDialog.Action
+                onClick={confirmRemove}
+                disabled={removeMut.isPending}
+                className="rounded-md bg-[var(--destructive)] px-3 py-1.5 text-[12.5px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+              >
+                {removeMut.isPending ? "Removing…" : `Remove from ${removeTarget?.tool}`}
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
       <SkillDetailDrawer />
     </div>
   );
 }
 
-function countFor(f: OwnershipFilter, c: { total: number; mine: number; bundle: number; builtin: number; unknown: number }) {
+function countFor(f: OwnershipFilter, c: { total: number; mine: number; bundle: number; builtin: number; unknown: number; drifted: number }) {
   switch (f) {
-    case "all":     return c.total;
-    case "mine":    return c.mine;
-    case "bundle":  return c.bundle;
-    case "builtin": return c.builtin;
-    case "unknown": return c.unknown;
+    case "all":         return c.total;
+    case "mine":        return c.mine;
+    case "bundle":      return c.bundle;
+    case "builtin":     return c.builtin;
+    case "unknown":     return c.unknown;
+    case "out-of-sync": return c.drifted;
+    case "orphan":      return 0;
   }
 }
 
@@ -195,7 +316,7 @@ function Stat({ k, v, d, extra, tone }: { k: string; v: number; d?: string; extr
         "mt-1.5 font-display text-2xl tabular-nums leading-none",
         tone === "warn" ? "text-warning" : tone === "bad" ? "text-destructive" : "text-foreground"
       )}>
-        {String(v).padStart(2, "0")}
+        {v}
       </div>
       <div className="mt-2 font-mono text-[11px] text-muted-foreground flex items-center gap-2">
         {d}
