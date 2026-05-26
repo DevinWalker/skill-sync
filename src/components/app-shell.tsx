@@ -1,5 +1,6 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "@/hooks/use-settings";
 import { applyTheme } from "@/lib/theme";
 import { Sidebar } from "./sidebar";
@@ -21,6 +22,9 @@ function ShellInner() {
   } | null>(null);
   const newSkillOpen = useUIState((s) => s.newSkillOpen);
   const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
+  const qc = useQueryClient();
+  const nav = useNavigate();
+  const [createdToast, setCreatedToast] = useState<{ name: string } | null>(null);
 
   useGlobalShortcuts({ onOpenPalette: () => setPaletteOpen(true) });
   useModeMigrationToast((msg, actions) =>
@@ -43,10 +47,32 @@ function ShellInner() {
       <NewSkillDialog
         open={newSkillOpen}
         onClose={() => setNewSkillOpen(false)}
-        onCreated={() => {
-          /* toast wires up in Task 7.4 */
+        onCreated={(_path, name) => {
+          qc.invalidateQueries({ queryKey: ["skills"] });
+          qc.invalidateQueries({ queryKey: ["drift"] });
+          setCreatedToast({ name });
+          setTimeout(() => setCreatedToast(null), 5000);
         }}
       />
+      {createdToast && (
+        <div
+          role="status"
+          className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-md border border-[var(--border)] bg-[var(--popover)] px-4 py-2.5 text-[12.5px] shadow-lg"
+        >
+          <span>
+            Created <code className="font-mono">{createdToast.name}</code>. Sync it to your tools when you're ready.
+          </span>
+          <button
+            onClick={() => {
+              nav("/");
+              setCreatedToast(null);
+            }}
+            className="font-mono text-[11px] text-[var(--primary)]"
+          >
+            Sync now
+          </button>
+        </div>
+      )}
       {migrationToast && (
         <div
           role="status"
