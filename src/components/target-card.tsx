@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { HealthBar } from "./health-bar";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings, useSetSettings } from "@/hooks/use-settings";
-import { useCopy } from "@/hooks/use-copy";
+import { strings } from "@/lib/copy";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { ipc } from "@/lib/ipc";
 import type { DriftStatus } from "@/types/bindings";
@@ -22,7 +22,6 @@ const PRETTY: Record<string, string> = {
 };
 
 export function TargetCard({ name, path, kind }: Props) {
-  const c = useCopy();
   const drift = useDrift();
   const { data: settings } = useSettings();
   const enabled = useMemo(() => new Set(settings?.enabled_targets ?? []), [settings?.enabled_targets]);
@@ -68,15 +67,15 @@ export function TargetCard({ name, path, kind }: Props) {
             {path ? path.replace(/^.*\/Users\/[^/]+/, "~") : (kind === "package-only" ? "output directory in Settings" : "not configured")}
           </div>
         </div>
-        {!isEnabled ? <Badge variant="default">{c.targetStatusOff}</Badge>
-          : !path && kind === "directory-mirror" ? <Badge variant="warning">{c.targetStatusNotSetUp}</Badge>
-          : <Badge variant="primary"><span className="w-1.5 h-1.5 rounded-full bg-current"/>{c.targetStatusActive}</Badge>}
+        {!isEnabled ? <Badge variant="default">{strings.targetStatusOff}</Badge>
+          : !path && kind === "directory-mirror" ? <Badge variant="warning">{strings.targetStatusNotSetUp}</Badge>
+          : <Badge variant="primary"><span className="w-1.5 h-1.5 rounded-full bg-current"/>{strings.targetStatusActive}</Badge>}
       </div>
 
       <div className="mt-5">
         <HealthBar inSync={counts.inSync} drift={counts.drift} missing={counts.missing} refused={counts.refused} />
         <div className="mt-2 font-mono text-[11px] text-muted-foreground">
-          {c.healthBarLabel(counts.inSync, counts.drift, counts.refused)}
+          {strings.healthBarLabel(counts.inSync, counts.drift, counts.refused)}
         </div>
       </div>
 
@@ -86,21 +85,21 @@ export function TargetCard({ name, path, kind }: Props) {
           disabled={!path}
           className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
         >
-          {c.showInFinder}
+          {strings.showInFinder}
         </button>
         <button
           onClick={test}
           disabled={!path}
           className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
         >
-          {c.testConnection}
+          {strings.testConnection}
         </button>
         <button
           onClick={toggle}
           disabled={update.isPending}
           className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
         >
-          {isEnabled ? c.turnOff : c.turnOn}
+          {isEnabled ? strings.turnOff : strings.turnOn}
         </button>
       </div>
     </div>
