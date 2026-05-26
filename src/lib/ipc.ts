@@ -8,6 +8,7 @@ import type {
   Settings,
   AuditEntry,
   GitStatus,
+  PackageInfo,
 } from "@/types/bindings";
 
 export const ipc = {
@@ -31,4 +32,5 @@ export const ipc = {
   gitStatus: (path: string) => invoke<GitStatus | null>("cmd_git_status", { path }),
   scaffoldSkill: (name: string, description: string) =>
     invoke<string>("cmd_scaffold_skill", { name, description }),
+  listPackages: () => invoke<PackageInfo[]>("cmd_list_packages"),
 };
