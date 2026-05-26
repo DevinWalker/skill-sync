@@ -74,6 +74,7 @@ export const copy = {
     showInFinder: "Show in Finder",
     testConnection: "Test connection",
     turnOff: "Turn off",
+    turnOn: "Turn on",
     nothingToTend: "Nothing to tend right now.",
     migrationToast:
       "We added a Simple mode that hides the deeper details. You're in Pro now.",
@@ -124,6 +125,7 @@ export const copy = {
     showInFinder: "Open in Finder",
     testConnection: "Test",
     turnOff: "Disable",
+    turnOn: "Enable",
     nothingToTend: "no drift detected.",
     migrationToast:
       "We added a Simple mode that hides the deeper details. You're in Pro now.",

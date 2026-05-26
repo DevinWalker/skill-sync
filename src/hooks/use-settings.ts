@@ -13,3 +13,16 @@ export function useSetSettings() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings"] }),
   });
 }
+
+export function useUpdateSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (next: Settings) => {
+      await ipc.setSettings(next);
+      return next;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["settings"] });
+    },
+  });
+}

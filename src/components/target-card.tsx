@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { HealthBar } from "./health-bar";
 import { useDrift } from "@/hooks/use-drift";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 import { useCopy } from "@/hooks/use-copy";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { ipc } from "@/lib/ipc";
@@ -39,6 +39,16 @@ export function TargetCard({ name, path, kind }: Props) {
     }
     return { inSync, drift: d, missing, refused };
   }, [drift.data, name]);
+
+  const update = useUpdateSettings();
+
+  const toggle = () => {
+    if (!settings) return;
+    const next = isEnabled
+      ? settings.enabled_targets.filter((t) => t !== name)
+      : [...settings.enabled_targets, name];
+    update.mutate({ ...settings, enabled_targets: next });
+  };
 
   const reveal = () => {
     if (path) revealItemInDir(path).catch(() => {});
@@ -84,6 +94,13 @@ export function TargetCard({ name, path, kind }: Props) {
           className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
         >
           {c.testConnection}
+        </button>
+        <button
+          onClick={toggle}
+          disabled={update.isPending}
+          className="inline-flex items-center h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
+        >
+          {isEnabled ? c.turnOff : c.turnOn}
         </button>
       </div>
     </div>
