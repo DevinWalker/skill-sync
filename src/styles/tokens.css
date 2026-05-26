@@ -140,15 +140,19 @@ code, .mono, .font-mono {
 /* Hairline rule */
 .rule { border-color: var(--border); }
 
-/* Grid background — subtle, on <main> via a ::before pseudo so the mask
-   doesn't fade the page content along with it. */
-.console-grid { position: relative; isolation: isolate; }
+/* Grid background — subtle, on <main> only via a utility class.
+   Painted on ::before so the mask vignettes only the decorative grid,
+   not the page content. */
+.console-grid {
+  position: relative;
+  isolation: isolate;
+}
 .console-grid::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  z-index: 0;
   background-image:
     linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
@@ -156,7 +160,6 @@ code, .mono, .font-mono {
   -webkit-mask-image: radial-gradient(900px 500px at 40% 0%, black, transparent 75%);
           mask-image: radial-gradient(900px 500px at 40% 0%, black, transparent 75%);
 }
-.console-grid > * { position: relative; z-index: 1; }
 :root:not(.dark) .console-grid::before {
   background-image:
     linear-gradient(rgba(0,0,0,0.020) 1px, transparent 1px),
@@ -172,8 +175,24 @@ code, .mono, .font-mono {
   animation: console-rise 540ms cubic-bezier(.2, .7, .2, 1) both;
 }
 
-/* Lime caret blink */
-@keyframes caret-blink { 50% { opacity: 0; } }
+/* Mascot — idle most of the cycle, brief dance + blink near the end.
+   transform-origin on the SVG pivots the head from near the base. */
+.mascot { transform-origin: 50% 80%; }
+.mascot-eye { transform-box: fill-box; transform-origin: center; }
+
+@keyframes mascot-dance {
+  0%, 72%, 100% { transform: rotate(0deg) translateY(0); }
+  78%           { transform: rotate(-7deg) translateY(-0.5px); }
+  84%           { transform: rotate(7deg)  translateY(-0.5px); }
+  90%           { transform: rotate(-3deg) translateY(0); }
+  95%           { transform: rotate(2deg)  translateY(0); }
+}
+
+@keyframes mascot-blink {
+  0%, 76%, 100%  { transform: scaleY(1); }
+  78%, 79.5%     { transform: scaleY(0.12); }
+  81.5%          { transform: scaleY(1); }
+}
 
 /* Pulse halo */
 @keyframes console-pulse {
