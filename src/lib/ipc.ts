@@ -27,4 +27,6 @@ export const ipc = {
   setSettings: (settings: Settings) =>
     invoke<void>("cmd_set_settings", { settings }),
   readAudit: (limit: number) => invoke<AuditEntry[]>("cmd_read_audit", { limit }),
+  scaffoldSkill: (name: string, description: string) =>
+    invoke<string>("cmd_scaffold_skill", { name, description }),
 };
