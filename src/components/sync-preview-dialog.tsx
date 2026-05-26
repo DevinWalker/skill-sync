@@ -15,10 +15,12 @@ export function SyncPreviewDialog({
   plan,
   open,
   onOpenChange,
+  readOnly = false,
 }: {
   plan: SyncPlan | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  readOnly?: boolean;
 }) {
   const exec = useExecuteSync();
   if (!plan) return null;
@@ -31,9 +33,9 @@ export function SyncPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0">
-        <DialogTitle className="sr-only">Sync preview</DialogTitle>
+        <DialogTitle className="sr-only">{readOnly ? "Preview — sync plan" : "Sync preview"}</DialogTitle>
         <header className="px-5 py-4 border-b border-border">
-          <div className="eyebrow">Sync preview · ⌘P</div>
+          <div className="eyebrow">{readOnly ? "Preview — sync plan" : "Sync preview · ⌘P"}</div>
           <div className="mt-3 grid grid-cols-4 gap-4">
             {(Object.keys(counts) as PlanAction[]).map((k) => (
               <div key={k}>
@@ -68,15 +70,17 @@ export function SyncPreviewDialog({
             onClick={() => onOpenChange(false)}
             className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover"
           >
-            Cancel
+            {readOnly ? "Close" : "Cancel"}
           </button>
-          <button
-            disabled={!hasWork || exec.isPending}
-            onClick={() => exec.mutate(plan, { onSuccess: () => onOpenChange(false) })}
-            className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-primary text-primary-foreground border border-primary text-[12.5px] font-medium hover:brightness-105 disabled:opacity-50"
-          >
-            {exec.isPending ? "Syncing…" : "Sync now"} <Kbd className="!bg-transparent !border-black/15 !text-black/55">↵</Kbd>
-          </button>
+          {!readOnly && (
+            <button
+              disabled={!hasWork || exec.isPending}
+              onClick={() => exec.mutate(plan, { onSuccess: () => onOpenChange(false) })}
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-primary text-primary-foreground border border-primary text-[12.5px] font-medium hover:brightness-105 disabled:opacity-50"
+            >
+              {exec.isPending ? "Syncing…" : "Sync now"} <Kbd className="!bg-transparent !border-black/15 !text-black/55">↵</Kbd>
+            </button>
+          )}
         </footer>
       </DialogContent>
     </Dialog>

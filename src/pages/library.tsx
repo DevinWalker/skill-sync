@@ -5,7 +5,7 @@ import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
 import { SkillDetailDrawer } from "@/components/skill-detail-drawer";
 import { Sparkline } from "@/components/sparkline";
 import { Kbd } from "@/components/ui/kbd";
-import { usePrimaryAction, usePrimarySearch } from "@/lib/shortcut-contexts";
+import { usePrimaryAction, usePrimarySearch, usePreviewAction } from "@/lib/shortcut-contexts";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
@@ -52,7 +52,7 @@ export function LibraryPage() {
   const [searchParams] = useSearchParams();
   const urlFilter = searchParams.get("filter");
 
-  const [plan, setPlan] = useState<SyncPlan | null>(null);
+  const [plan, setPlan] = useState<{ data: SyncPlan; readOnly: boolean } | null>(null);
   const planMut = usePlanSync();
   const pullBack = usePullBack();
   const orphans = useMemo(
@@ -68,16 +68,27 @@ export function LibraryPage() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const search = usePrimarySearch();
   const action = usePrimaryAction();
+  const preview = usePreviewAction();
   const [archiveEntries, setArchiveEntries] = useState<AuditEntry[]>([]);
+
+  const runPreview = () =>
+    planMut.mutate(undefined, { onSuccess: (p) => setPlan({ data: p, readOnly: true }) });
+  const runSync = () =>
+    planMut.mutate(undefined, { onSuccess: (p) => setPlan({ data: p, readOnly: false }) });
 
   useEffect(() => {
     search.register(searchRef);
   }, [search]);
 
   useEffect(() => {
-    action.setAction(() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) }), "Sync mine");
+    action.setAction(runSync, "Sync mine");
     return () => action.setAction(null);
   }, [action, planMut]);
+
+  useEffect(() => {
+    preview.setAction(runPreview);
+    return () => preview.setAction(null);
+  }, [preview, planMut]);
 
   useEffect(() => {
     if (!urlFilter) return;
@@ -154,14 +165,14 @@ export function LibraryPage() {
               </button>
             )}
             <button
-              onClick={() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })}
+              onClick={runPreview}
               disabled={planMut.isPending}
               className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
             >
               Preview <Kbd>⌘</Kbd><Kbd>P</Kbd>
             </button>
             <button
-              onClick={() => planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })}
+              onClick={runSync}
               disabled={planMut.isPending}
               className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-primary text-primary-foreground border border-primary text-[12.5px] font-medium hover:brightness-105 shadow-[0_8px_24px_-8px_var(--accent-glow)]"
             >
@@ -237,7 +248,12 @@ export function LibraryPage() {
 
       <LibraryTable filter={filter} ownershipFilter={ownershipFilter} />
 
-      <SyncPreviewDialog plan={plan} open={!!plan} onOpenChange={(v) => !v && setPlan(null)} />
+      <SyncPreviewDialog
+        plan={plan?.data ?? null}
+        readOnly={plan?.readOnly ?? false}
+        open={!!plan}
+        onOpenChange={(v) => !v && setPlan(null)}
+      />
       <SkillDetailDrawer />
     </div>
   );

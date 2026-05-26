@@ -9,7 +9,7 @@ import { CmdBar } from "./cmd-bar";
 import { CmdPalette } from "./cmd-palette";
 import { ToastHost } from "./toast-host";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
-import { PrimaryActionProvider, PrimarySearchProvider } from "@/lib/shortcut-contexts";
+import { PrimaryActionProvider, PrimarySearchProvider, PreviewActionProvider } from "@/lib/shortcut-contexts";
 import { useModeMigrationToast } from "@/hooks/use-mode-migration-toast";
 import { NewSkillDialog } from "@/components/new-skill-dialog";
 import { FirstRunModal } from "@/components/first-run-modal";
@@ -121,7 +121,9 @@ export function AppShell() {
   return (
     <PrimaryActionProvider>
       <PrimarySearchProvider>
-        <ShellInner />
+        <PreviewActionProvider>
+          <ShellInner />
+        </PreviewActionProvider>
       </PrimarySearchProvider>
     </PrimaryActionProvider>
   );

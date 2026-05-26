@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePrimaryAction, usePrimarySearch } from "@/lib/shortcut-contexts";
+import { usePrimaryAction, usePrimarySearch, usePreviewAction } from "@/lib/shortcut-contexts";
 import { useUIState } from "@/store/ui-state";
 
 const SEQUENCE_TIMEOUT_MS = 1200;
@@ -9,6 +9,7 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
   const navigate = useNavigate();
   const search = usePrimarySearch();
   const action = usePrimaryAction();
+  const preview = usePreviewAction();
   const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
   const pendingG = useRef<number | null>(null);
 
@@ -50,6 +51,13 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
         return;
       }
 
+      // ⌘P — preview (read-only sync plan)
+      if (meta && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        preview.trigger();
+        return;
+      }
+
       // Esc — close drawer/dialog handled by Radix/Sheet; no global handler needed.
 
       // From here on, ignore if the user is typing.
@@ -85,5 +93,5 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
       window.removeEventListener("keydown", handler);
       clearPending();
     };
-  }, [onOpenPalette, navigate, search, action, setNewSkillOpen]);
+  }, [onOpenPalette, navigate, search, action, preview, setNewSkillOpen]);
 }
