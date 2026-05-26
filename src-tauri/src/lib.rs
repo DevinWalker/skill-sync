@@ -19,6 +19,7 @@ use ipc::commands::{
     cmd_set_settings, cmd_test_target_write,
 };
 use ipc::skills_scaffold::cmd_scaffold_skill;
+use ipc::git_status::cmd_git_status;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -48,6 +49,7 @@ pub fn run() {
             cmd_set_settings,
             cmd_read_audit,
             cmd_scaffold_skill,
+            cmd_git_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
