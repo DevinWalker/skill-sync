@@ -106,8 +106,13 @@ export function LibraryTable({
         case "orphan": return false; // orphans render in their own section (Task 4.5)
       }
     };
-    return all.filter((s) => matcher(s) && ownershipMatches(s));
-  }, [skills.data, filter, ownershipFilter, ownership]);
+    return all.filter(
+      (s) =>
+        matcher(s) &&
+        ownershipMatches(s) &&
+        (mode === "pro" || (s.class !== "Bundle" && s.class !== "ToolBuiltin")),
+    );
+  }, [skills.data, filter, ownershipFilter, ownership, mode]);
 
   if (skills.isLoading) {
     return <div className="px-8 py-12 eyebrow">Scanning…</div>;
