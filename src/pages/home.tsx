@@ -12,6 +12,7 @@ import { deriveOrphans } from "@/lib/orphans";
 import type { Orphan } from "@/lib/orphans";
 import { activitySentence } from "@/lib/activity-sentence";
 import type { DriftStatus, SkillView, SyncPlan } from "@/types/bindings";
+import { useUIState } from "@/store/ui-state";
 
 function classify(
   skills: SkillView[],
@@ -62,7 +63,7 @@ export function HomePage() {
     alert(`Removing "${name}" from ${tool} isn't wired yet. Open the folder in Finder and delete it manually.`);
   };
   const [plan, setPlan] = useState<SyncPlan | null>(null);
-  const [, setNewSkillOpen] = useState(false);
+  const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
 
   let h1: string;
   let showPrimary = true;

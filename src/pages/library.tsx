@@ -20,6 +20,7 @@ import { OrphanRow } from "@/components/orphan-row";
 import { ipc } from "@/lib/ipc";
 import type { AuditEntry, DriftStatus, SyncPlan } from "@/types/bindings";
 import { cn } from "@/lib/utils";
+import { useUIState } from "@/store/ui-state";
 
 type OwnershipFilter = "all" | "mine" | "bundle" | "builtin" | "unknown" | "out-of-sync" | "orphan";
 
@@ -31,6 +32,7 @@ export function LibraryPage() {
   const { data: settings } = useSettings();
   const c = useCopy();
   const mode = useMode();
+  const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
 
   const FILTERS_SIMPLE: { id: OwnershipFilter; label: string }[] = [
     { id: "all",         label: "All" },
@@ -145,7 +147,7 @@ export function LibraryPage() {
             {mode === "simple" && (
               <button
                 type="button"
-                onClick={() => alert("Coming soon")}
+                onClick={() => setNewSkillOpen(true)}
                 className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
               >
                 + New skill

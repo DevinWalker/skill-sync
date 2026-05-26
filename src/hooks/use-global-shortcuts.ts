@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrimaryAction, usePrimarySearch } from "@/lib/shortcut-contexts";
+import { useUIState } from "@/store/ui-state";
 
 const SEQUENCE_TIMEOUT_MS = 1200;
 
@@ -8,6 +9,7 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
   const navigate = useNavigate();
   const search = usePrimarySearch();
   const action = usePrimaryAction();
+  const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
   const pendingG = useRef<number | null>(null);
 
   useEffect(() => {
@@ -38,6 +40,13 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
       if (meta && e.key === "Enter") {
         e.preventDefault();
         action.trigger();
+        return;
+      }
+
+      // ⌘N — new skill dialog
+      if (meta && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setNewSkillOpen(true);
         return;
       }
 
@@ -75,5 +84,5 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
       window.removeEventListener("keydown", handler);
       clearPending();
     };
-  }, [onOpenPalette, navigate, search, action]);
+  }, [onOpenPalette, navigate, search, action, setNewSkillOpen]);
 }

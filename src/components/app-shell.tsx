@@ -9,6 +9,8 @@ import { CmdPalette } from "./cmd-palette";
 import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { PrimaryActionProvider, PrimarySearchProvider } from "@/lib/shortcut-contexts";
 import { useModeMigrationToast } from "@/hooks/use-mode-migration-toast";
+import { NewSkillDialog } from "@/components/new-skill-dialog";
+import { useUIState } from "@/store/ui-state";
 
 function ShellInner() {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -17,6 +19,8 @@ function ShellInner() {
     try: () => void;
     stay: () => void;
   } | null>(null);
+  const newSkillOpen = useUIState((s) => s.newSkillOpen);
+  const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
 
   useGlobalShortcuts({ onOpenPalette: () => setPaletteOpen(true) });
   useModeMigrationToast((msg, actions) =>
@@ -36,6 +40,13 @@ function ShellInner() {
       </div>
       <CmdBar onOpenPalette={() => setPaletteOpen(true)} />
       <CmdPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <NewSkillDialog
+        open={newSkillOpen}
+        onClose={() => setNewSkillOpen(false)}
+        onCreated={() => {
+          /* toast wires up in Task 7.4 */
+        }}
+      />
       {migrationToast && (
         <div
           role="status"
