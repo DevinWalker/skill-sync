@@ -15,8 +15,7 @@ import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { usePlanSync, usePullBack, useRemoveFromTarget } from "@/hooks/use-sync";
 import { useDriftRefresh } from "@/hooks/use-drift-refresh";
-import { useCopy } from "@/hooks/use-copy";
-import { useMode } from "@/hooks/use-mode";
+import { strings } from "@/lib/copy";
 import { bucketArchivesByDay } from "@/lib/audit";
 import { deriveOrphans, type Orphan } from "@/lib/orphans";
 import { OrphanRow } from "@/components/orphan-row";
@@ -33,24 +32,16 @@ export function LibraryPage() {
   const ownership = useOwnership();
   const drift = useDrift();
   const { data: settings } = useSettings();
-  const c = useCopy();
-  const mode = useMode();
   const setNewSkillOpen = useUIState((s) => s.setNewSkillOpen);
 
-  const FILTERS_SIMPLE: { id: OwnershipFilter; label: string }[] = [
+  const FILTERS: { id: OwnershipFilter; label: string }[] = [
     { id: "all",         label: "All" },
     { id: "mine",        label: "Mine" },
+    { id: "bundle",      label: "Bundle" },
+    { id: "builtin",     label: "Built-in" },
     { id: "unknown",     label: "Unknown" },
     { id: "out-of-sync", label: "Out of sync" },
   ];
-  const FILTERS_PRO: { id: OwnershipFilter; label: string }[] = [
-    { id: "all",     label: "All" },
-    { id: "mine",    label: "Mine" },
-    { id: "bundle",  label: "Bundle" },
-    { id: "builtin", label: "Built-in" },
-    { id: "unknown", label: "Unknown" },
-  ];
-  const FILTERS = mode === "simple" ? FILTERS_SIMPLE : FILTERS_PRO;
 
   const [searchParams] = useSearchParams();
   const urlFilter = searchParams.get("filter");
@@ -163,30 +154,28 @@ export function LibraryPage() {
     <div className="console-rise">
       <div className="px-8 pt-7">
         <div className="font-mono text-[11px] text-fg-faint mb-3">
-          {c.libraryCrumb((settings?.source_root ?? "~/.claude/skills").replace(/^.*\/Users\/[^/]+/, "~"))}
+          {strings.libraryCrumb((settings?.source_root ?? "~/.claude/skills").replace(/^.*\/Users\/[^/]+/, "~"))}
         </div>
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h1 className="font-display text-2xl text-foreground">{c.libraryTitle}</h1>
+            <h1 className="font-display text-2xl text-foreground">{strings.libraryTitle}</h1>
             <div className="font-mono text-xs text-fg-dim mt-1.5">
-              {c.librarySubhead(
+              {strings.librarySubhead(
                 counts.total,
                 settings?.enabled_targets?.length ?? 0,
-                mode === "simple" ? counts.drifted + counts.unknown : counts.drifted,
+                counts.drifted,
                 "—",
               )}
             </div>
           </div>
           <div className="flex gap-2">
-            {mode === "simple" && (
-              <button
-                type="button"
-                onClick={() => setNewSkillOpen(true)}
-                className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
-              >
-                + New skill
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setNewSkillOpen(true)}
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-md border border-border bg-transparent text-foreground text-[12.5px] hover:bg-bg-hover"
+            >
+              + New skill
+            </button>
             <button
               onClick={runPreview}
               disabled={planMut.isPending}
@@ -251,7 +240,7 @@ export function LibraryPage() {
         </div>
       </div>
 
-      {mode === "simple" && orphans.length > 0 && (
+      {orphans.length > 0 && (
         <section className="px-8 mb-4">
           <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
             <h2 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-dim)]">
