@@ -1,18 +1,23 @@
 import { TargetCard } from "@/components/target-card";
 import { useSettings } from "@/hooks/use-settings";
+import { useMode } from "@/hooks/use-mode";
 
 export function TargetsPage() {
   const { data: settings } = useSettings();
+  const mode = useMode();
   const home = settings?.source_root
     ? String(settings.source_root).replace(/\/\.claude\/skills\/?$/, "")
     : "";
 
-  const cards = [
+  const allCards = [
     { name: "claude", path: home ? `${home}/.claude/skills` : undefined, kind: "directory-mirror" as const },
     { name: "codex",  path: home ? `${home}/.codex/skills`  : undefined, kind: "directory-mirror" as const },
     { name: "cursor", path: home ? `${home}/.cursor/skills` : undefined, kind: "directory-mirror" as const },
     { name: "cowork", path: undefined, kind: "package-only" as const },
   ];
+  const cards = mode === "simple"
+    ? allCards.filter((t) => t.name !== "cowork")
+    : allCards;
   const enabledCount = settings?.enabled_targets?.length ?? 0;
 
   return (
