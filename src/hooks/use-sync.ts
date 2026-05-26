@@ -31,6 +31,18 @@ export function usePullBack() {
   });
 }
 
+export function useRemoveFromTarget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ skill, target }: { skill: string; target: string }) =>
+      ipc.removeFromTarget(skill, target),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["skills"] });
+      qc.invalidateQueries({ queryKey: ["drift"] });
+    },
+  });
+}
+
 export function useBuildPackage() {
   const qc = useQueryClient();
   return useMutation({

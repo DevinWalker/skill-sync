@@ -9,6 +9,7 @@ import type {
   AuditEntry,
   GitStatus,
   PackageInfo,
+  RemoveResult,
 } from "@/types/bindings";
 
 export const ipc = {
@@ -33,4 +34,6 @@ export const ipc = {
   scaffoldSkill: (name: string, description: string) =>
     invoke<string>("cmd_scaffold_skill", { name, description }),
   listPackages: () => invoke<PackageInfo[]>("cmd_list_packages"),
+  removeFromTarget: (skill: string, target: string) =>
+    invoke<RemoveResult>("cmd_remove_from_target", { skill, target }),
 };
