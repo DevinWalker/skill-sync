@@ -7,7 +7,7 @@ import { useUIState } from "@/store/ui-state";
 import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
-import { usePullBack } from "@/hooks/use-sync";
+import { usePullBack, useBuildPackage } from "@/hooks/use-sync";
 import { useMode } from "@/hooks/use-mode";
 import { useSettings } from "@/hooks/use-settings";
 import { locationsByTarget } from "@/lib/target-locations";
@@ -37,6 +37,7 @@ export function SkillDetailDrawer() {
   const ownership = useOwnership();
   const drift = useDrift();
   const pullBack = usePullBack();
+  const buildPackage = useBuildPackage();
   const mode = useMode();
   const { data: settings } = useSettings();
   const [compareTarget, setCompareTarget] = useState<string | null>(null);
@@ -121,11 +122,11 @@ export function SkillDetailDrawer() {
             </button>
             {mode === "pro" && (
               <button
-                disabled
-                title="Packaging not yet wired"
-                className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground opacity-50 cursor-not-allowed"
+                onClick={() => buildPackage.mutate(skill.name)}
+                disabled={buildPackage.isPending}
+                className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
               >
-                Build .skill
+                {buildPackage.isPending ? "Building…" : "Build .skill"}
               </button>
             )}
           </div>

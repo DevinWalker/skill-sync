@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ipc } from "@/lib/ipc";
 import type { SyncPlan } from "@/types/bindings";
+import { toast } from "@/store/toast-store";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 export function usePlanSync() {
   return useMutation({ mutationFn: () => ipc.planSync() });
@@ -25,6 +27,24 @@ export function usePullBack() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["skills"] });
       qc.invalidateQueries({ queryKey: ["drift"] });
+    },
+  });
+}
+
+export function useBuildPackage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (skill: string) => ipc.buildPackage(skill),
+    onSuccess: (path) => {
+      const filename = String(path).split("/").pop() ?? "package";
+      toast.success(
+        `Built ${filename}`,
+        { label: "Reveal", onClick: () => revealItemInDir(String(path)).catch(() => {}) },
+      );
+      qc.invalidateQueries({ queryKey: ["packages"] });
+    },
+    onError: (err) => {
+      toast.error(`Build failed: ${err}`);
     },
   });
 }
