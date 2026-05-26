@@ -15,7 +15,7 @@ pub struct Settings {
     pub theme: String,
     #[serde(default = "default_mode")]
     pub mode: String,
-    #[serde(default)]
+    #[serde(default = "default_first_run_completed")]
     pub first_run_completed: bool,
     #[serde(default)]
     pub mode_migration_announced: bool,
@@ -23,6 +23,12 @@ pub struct Settings {
 
 fn default_mode() -> String {
     "pro".into() // Existing installs migrate to pro; new installs override to "simple" via first-run.
+}
+
+fn default_first_run_completed() -> bool {
+    // Legacy settings.json (no field) → true so existing users skip first-run.
+    // Fresh installs use Settings::defaults() which sets this to false.
+    true
 }
 
 impl Settings {
@@ -61,7 +67,8 @@ mod tests {
         }"#;
         let settings: Settings = serde_json::from_str(legacy_json).unwrap();
         assert_eq!(settings.mode, "pro");
-        assert!(!settings.first_run_completed);
+        // Legacy installs skip first-run (already had a working app before this redesign).
+        assert!(settings.first_run_completed);
         assert!(!settings.mode_migration_announced);
     }
 
