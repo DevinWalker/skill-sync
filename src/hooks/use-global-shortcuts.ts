@@ -71,7 +71,8 @@ export function useGlobalShortcuts({ onOpenPalette }: { onOpenPalette: () => voi
       if (pendingG.current !== null && !meta && !e.altKey && !e.shiftKey) {
         clearPending();
         switch (e.key.toLowerCase()) {
-          case "l": e.preventDefault(); navigate("/"); return;
+          case "h": e.preventDefault(); navigate("/"); return;
+          case "l": e.preventDefault(); navigate("/library"); return;
           case "t": e.preventDefault(); navigate("/targets"); return;
           case "a": e.preventDefault(); navigate("/activity"); return;
           case "s": e.preventDefault(); navigate("/settings"); return;
