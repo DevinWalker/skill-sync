@@ -1,11 +1,14 @@
 import { NavLink } from "react-router-dom";
 import { Home as HomeIcon, LayoutGrid, Boxes, Clock, Package, Settings as SettingsIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "@/hooks/use-settings";
 import { useSkills } from "@/hooks/use-skills";
 import { useMode } from "@/hooks/use-mode";
 import { useCopy } from "@/hooks/use-copy";
 import { cn } from "@/lib/utils";
 import { GitStatusChip } from "./git-status-chip";
+import { pickAndSaveSourceFolder } from "@/lib/pick-source-folder";
+import { toast } from "@/store/toast-store";
 
 const BUILD_SHA = import.meta.env.VITE_BUILD_SHA as string;
 
@@ -16,6 +19,7 @@ export function Sidebar() {
   const skills = useSkills();
   const mode = useMode();
   const c = useCopy();
+  const qc = useQueryClient();
   const sourceRoot = settings?.source_root ?? "—";
   const enabled = new Set(settings?.enabled_targets ?? []);
   const skillCount = skills.data?.length ?? 0;
@@ -79,9 +83,21 @@ export function Sidebar() {
         <div className="px-2.5 mt-1.5">
           <GitStatusChip />
         </div>
-        <NavLink to="/settings" className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground">
+        <button
+          type="button"
+          onClick={async () => {
+            if (!settings) return;
+            try {
+              const next = await pickAndSaveSourceFolder(settings);
+              if (next) qc.invalidateQueries({ queryKey: ["settings"] });
+            } catch (e) {
+              toast.error(`Couldn't change source: ${e}`);
+            }
+          }}
+          className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground text-left w-full"
+        >
           + change source
-        </NavLink>
+        </button>
       </div>
 
       <div className="px-3 pt-4 pb-2">
