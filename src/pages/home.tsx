@@ -58,6 +58,17 @@ export function HomePage() {
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const [, setNewSkillOpen] = useState(false);
 
+  let h1: string;
+  let showPrimary = true;
+  if (skills.length === 0) {
+    h1 = "Your source folder is empty. Create your first skill to get going.";
+    showPrimary = false;
+  } else if (counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0) {
+    h1 = `Your ${skills.length} skills are in sync across ${targets.length} tools.`;
+  } else {
+    h1 = `${counts.inSync} of your ${skills.length} skills are in sync. ${counts.outOfSync} out of sync, ${counts.orphans} not in your source.`;
+  }
+
   return (
     <main className="px-8 pt-7 pb-20">
       <div className="mb-6 flex items-start justify-between gap-6">
@@ -66,32 +77,42 @@ export function HomePage() {
             {c.homeCrumb}
           </p>
           <h1 className="text-[28px] font-semibold tracking-[-0.02em]">
-            {counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0
-              ? `Your ${skills.length} skills are in sync across ${targets.length} tools.`
-              : `${counts.inSync} of your ${skills.length} skills are in sync. ${counts.outOfSync} out of sync, ${counts.orphans} not in your source.`}
+            {h1}
           </h1>
           <p className="mt-1 font-mono text-[11px] text-[var(--fg-dim)]">
             last scan · source {settings?.source_root ?? "—"}
           </p>
         </div>
         <div className="flex items-center gap-2 pt-6">
-          <button
-            type="button"
-            onClick={() =>
-              planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })
-            }
-            disabled={planMut.isPending || skills.length === 0}
-            className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105 disabled:opacity-50"
-          >
-            {planMut.isPending ? "Drafting…" : `${c.syncEverythingButton} ↵`}
-          </button>
-          <button
-            type="button"
-            onClick={() => setNewSkillOpen(true)}
-            className="rounded-md border border-[var(--border)] px-3.5 py-1.5 text-[12.5px] font-medium hover:bg-[var(--bg-hover)]"
-          >
-            + New skill
-          </button>
+          {!showPrimary ? (
+            <button
+              type="button"
+              onClick={() => setNewSkillOpen(true)}
+              className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105"
+            >
+              + Create your first skill
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  planMut.mutate(undefined, { onSuccess: (p) => setPlan(p) })
+                }
+                disabled={planMut.isPending || skills.length === 0}
+                className="rounded-md bg-[var(--primary)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--primary-foreground)] hover:brightness-105 disabled:opacity-50"
+              >
+                {planMut.isPending ? "Drafting…" : `${c.syncEverythingButton} ↵`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewSkillOpen(true)}
+                className="rounded-md border border-[var(--border)] px-3.5 py-1.5 text-[12.5px] font-medium hover:bg-[var(--bg-hover)]"
+              >
+                + New skill
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -102,7 +123,11 @@ export function HomePage() {
         <Cell label={c.statusNeedsClaiming} value={`${counts.orphans} skills`} onClick={() => nav("/library?filter=orphan")} />
         <Cell label={c.statusUnknown} value={`${counts.unknown} skills`} onClick={() => nav("/library?filter=unknown")} />
       </div>
-      <NeedsAttentionCard orphans={orphans} />
+      {counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0 && skills.length > 0 ? (
+        <p className="mt-6 font-mono text-[11px] text-[var(--fg-dim)]">{c.nothingToTend}</p>
+      ) : (
+        <NeedsAttentionCard orphans={orphans} />
+      )}
 
       <section className="mt-8">
         <h2 className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-dim)]">
