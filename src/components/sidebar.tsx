@@ -3,8 +3,7 @@ import { Home as HomeIcon, LayoutGrid, Boxes, Clock, Package, Settings as Settin
 import { useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "@/hooks/use-settings";
 import { useSkills } from "@/hooks/use-skills";
-import { useMode } from "@/hooks/use-mode";
-import { useCopy } from "@/hooks/use-copy";
+import { strings } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import { GitStatusChip } from "./git-status-chip";
 import { pickAndSaveSourceFolder } from "@/lib/pick-source-folder";
@@ -17,30 +16,19 @@ const ALL_TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 export function Sidebar() {
   const { data: settings } = useSettings();
   const skills = useSkills();
-  const mode = useMode();
-  const c = useCopy();
   const qc = useQueryClient();
   const sourceRoot = settings?.source_root ?? "—";
   const enabled = new Set(settings?.enabled_targets ?? []);
   const skillCount = skills.data?.length ?? 0;
 
-  const items =
-    mode === "simple"
-      ? [
-          { to: "/",         label: "Home",          Icon: HomeIcon },
-          { to: "/library",  label: c.libraryTitle,  Icon: LayoutGrid },
-          { to: "/targets",  label: c.targetsTitle,  Icon: Boxes },
-          { to: "/activity", label: c.historyTitle,  Icon: Clock },
-          { to: "/settings", label: "Settings",      Icon: SettingsIcon },
-        ]
-      : [
-          { to: "/",         label: "Home",          Icon: HomeIcon },
-          { to: "/library",  label: c.libraryTitle,  Icon: LayoutGrid },
-          { to: "/targets",  label: c.targetsTitle,  Icon: Boxes },
-          { to: "/activity", label: c.historyTitle,  Icon: Clock },
-          { to: "/packages", label: "Packages",      Icon: Package },
-          { to: "/settings", label: "Settings",      Icon: SettingsIcon },
-        ];
+  const items = [
+    { to: "/",         label: "Home",                Icon: HomeIcon },
+    { to: "/library",  label: strings.libraryTitle,  Icon: LayoutGrid },
+    { to: "/targets",  label: strings.targetsTitle,  Icon: Boxes },
+    { to: "/activity", label: strings.historyTitle,  Icon: Clock },
+    { to: "/packages", label: "Packages",            Icon: Package },
+    { to: "/settings", label: "Settings",            Icon: SettingsIcon },
+  ];
 
   return (
     <nav className="w-[220px] shrink-0 border-r border-border h-full flex flex-col bg-background">
@@ -120,9 +108,7 @@ export function Sidebar() {
         <div className="px-2.5 font-mono text-[10.5px] text-fg-faint leading-relaxed">
           <div className="flex justify-between"><span>last sync</span><span className="text-muted-foreground">—</span></div>
           <div className="flex justify-between"><span>archive</span><span className="text-muted-foreground">~/.Trash</span></div>
-          {mode === "pro" && (
-            <div className="flex justify-between"><span>build</span><span className="text-muted-foreground">{BUILD_SHA}</span></div>
-          )}
+          <div className="flex justify-between"><span>build</span><span className="text-muted-foreground">{BUILD_SHA}</span></div>
         </div>
       </div>
     </nav>
