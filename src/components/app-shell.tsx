@@ -11,6 +11,7 @@ import { useGlobalShortcuts } from "@/hooks/use-global-shortcuts";
 import { PrimaryActionProvider, PrimarySearchProvider } from "@/lib/shortcut-contexts";
 import { useModeMigrationToast } from "@/hooks/use-mode-migration-toast";
 import { NewSkillDialog } from "@/components/new-skill-dialog";
+import { FirstRunModal } from "@/components/first-run-modal";
 import { useUIState } from "@/store/ui-state";
 
 function ShellInner() {
@@ -35,6 +36,7 @@ function ShellInner() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
+      <FirstRunModal />
       <TitleBar />
       <div className="flex-1 flex min-h-0">
         <Sidebar />
