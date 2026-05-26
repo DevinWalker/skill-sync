@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useMode } from "@/hooks/use-mode";
+import { useCopy } from "@/hooks/use-copy";
 import { activitySentence } from "@/lib/activity-sentence";
 import { friendlyTime } from "@/lib/time";
 import { ipc } from "@/lib/ipc";
 import { cn } from "@/lib/utils";
 import type { AuditEntry } from "@/types/bindings";
 
-type FilterId = "all" | "sync" | "pull" | "package";
+type FilterId = "all" | "sync" | "pull" | "package" | "archive" | "refused" | "drift";
 
-const FILTERS: { id: FilterId; label: string }[] = [
-  { id: "all",     label: "All" },
-  { id: "sync",    label: "Sync" },
-  { id: "pull",    label: "Pull-back" },
-  { id: "package", label: "Package" },
-];
+const simpleFilterIds = ["all", "sync", "pull", "archive", "drift"] as const;
+const proFilterIds = ["all", "sync", "pull", "package", "refused", "drift"] as const;
 
 function matchFilter(kind: string, f: FilterId): boolean {
   if (f === "all") return true;
-  if (f === "sync")    return kind === "sync.execute";
-  if (f === "pull")    return kind === "sync.pull_back";
+  if (f === "sync")    return kind === "sync.execute" || kind === "sync.commit";
+  if (f === "pull")    return kind === "sync.pull_back" || kind === "pull.back";
   if (f === "package") return kind === "package.build";
+  if (f === "archive") return kind === "archive";
+  if (f === "refused") return kind === "refused";
+  if (f === "drift")   return kind === "drift.detected";
   return false;
 }
 
@@ -63,9 +63,22 @@ function dotColorFor(kind: string): string {
 
 export function ActivityList() {
   const mode = useMode();
+  const c = useCopy();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [filter, setFilter] = useState<FilterId>("all");
   const [limit, setLimit] = useState(50);
+
+  // Build filter chips from mode-aware labels
+  const ids = mode === "simple" ? simpleFilterIds : proFilterIds;
+  const labels = c.activityFilters;
+  const filterChips = labels.map((label, i) => ({ id: ids[i] as FilterId, label }));
+
+  // Fallback to "all" if filter is not valid in current mode
+  useEffect(() => {
+    if (!ids.includes(filter as any)) {
+      setFilter("all");
+    }
+  }, [mode, ids, filter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +97,7 @@ export function ActivityList() {
   return (
     <div className="px-8 pb-12">
       <div className="mb-4 inline-flex items-center gap-0.5 p-0.5 bg-card border border-border rounded-md">
-        {FILTERS.map((f) => (
+        {filterChips.map((f) => (
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
