@@ -8,7 +8,6 @@ import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { usePullBack, useBuildPackage } from "@/hooks/use-sync";
-import { useMode } from "@/hooks/use-mode";
 import { useSettings } from "@/hooks/use-settings";
 import { locationsByTarget } from "@/lib/target-locations";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -38,7 +37,6 @@ export function SkillDetailDrawer() {
   const drift = useDrift();
   const pullBack = usePullBack();
   const buildPackage = useBuildPackage();
-  const mode = useMode();
   const { data: settings } = useSettings();
   const [compareTarget, setCompareTarget] = useState<string | null>(null);
   const skill = skills.data?.find((s) => s.name === selected) ?? null;
@@ -71,8 +69,6 @@ export function SkillDetailDrawer() {
             <dd className="text-foreground"><OwnerBadge klass={skill.class} confirmed={confirmed} /></dd>
             <dt className="text-fg-dim">locations</dt>
             <dd className="text-foreground">{skill.locations.length}</dd>
-            {mode === "pro" && <dt className="text-fg-dim">hash</dt>}
-            {mode === "pro" && <dd className="text-foreground">{primaryLoc?.hash.slice(0, 12) ?? "—"}</dd>}
             <dt className="text-fg-dim">symlink</dt>
             <dd className="text-foreground">{primaryLoc?.is_symlink ? "yes" : "no"}</dd>
           </dl>
@@ -86,7 +82,7 @@ export function SkillDetailDrawer() {
                   <div className="text-sm">{PRETTY_TARGET[t]}</div>
                   <div>{status ? <DriftBadge status={status} /> : <span className="font-mono text-[10.5px] text-fg-dim">—</span>}</div>
                   <div className="flex gap-1.5">
-                    {mode === "simple" && (status === "drifted-target-newer" || status === "drifted-source-newer") && (
+                    {(status === "drifted-target-newer" || status === "drifted-source-newer") && (
                       <button
                         onClick={() => setCompareTarget(t)}
                         className="font-mono text-[10.5px] px-2 py-1 rounded border border-border bg-card text-muted-foreground hover:bg-bg-hover"
@@ -120,15 +116,13 @@ export function SkillDetailDrawer() {
             >
               Reveal in Finder
             </button>
-            {mode === "pro" && (
-              <button
-                onClick={() => buildPackage.mutate(skill.name)}
-                disabled={buildPackage.isPending}
-                className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
-              >
-                {buildPackage.isPending ? "Building…" : "Build .skill"}
-              </button>
-            )}
+            <button
+              onClick={() => buildPackage.mutate(skill.name)}
+              disabled={buildPackage.isPending}
+              className="h-8 px-3 rounded-md border border-border text-[12.5px] text-muted-foreground hover:bg-bg-hover disabled:opacity-50"
+            >
+              {buildPackage.isPending ? "Building…" : "Build .skill"}
+            </button>
           </div>
         </div>
 
