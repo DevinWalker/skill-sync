@@ -1,32 +1,47 @@
 import { NavLink } from "react-router-dom";
-import { LayoutGrid, Boxes, Clock, Package } from "lucide-react";
+import { Home as HomeIcon, LayoutGrid, Boxes, Clock, Package, Settings as SettingsIcon } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { useSkills } from "@/hooks/use-skills";
+import { useMode } from "@/hooks/use-mode";
+import { useCopy } from "@/hooks/use-copy";
 import { cn } from "@/lib/utils";
 
 const BUILD_SHA = import.meta.env.VITE_BUILD_SHA as string;
-
-const ITEMS = [
-  { to: "/",         label: "Library",  Icon: LayoutGrid },
-  { to: "/targets",  label: "Targets",  Icon: Boxes },
-  { to: "/activity", label: "Activity", Icon: Clock },
-  { to: "/settings", label: "Settings", Icon: Package }, // Settings as last; Packages is a future view
-] as const;
 
 const ALL_TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
 export function Sidebar() {
   const { data: settings } = useSettings();
   const skills = useSkills();
+  const mode = useMode();
+  const c = useCopy();
   const sourceRoot = settings?.source_root ?? "—";
   const enabled = new Set(settings?.enabled_targets ?? []);
   const skillCount = skills.data?.length ?? 0;
+
+  const items =
+    mode === "simple"
+      ? [
+          { to: "/",         label: "Home",          Icon: HomeIcon },
+          { to: "/library",  label: c.libraryTitle,  Icon: LayoutGrid },
+          { to: "/targets",  label: c.targetsTitle,  Icon: Boxes },
+          { to: "/activity", label: c.historyTitle,  Icon: Clock },
+          { to: "/settings", label: "Settings",      Icon: SettingsIcon },
+        ]
+      : [
+          { to: "/",         label: "Home",          Icon: HomeIcon },
+          { to: "/library",  label: c.libraryTitle,  Icon: LayoutGrid },
+          { to: "/targets",  label: c.targetsTitle,  Icon: Boxes },
+          { to: "/activity", label: c.historyTitle,  Icon: Clock },
+          { to: "/packages", label: "Packages",      Icon: Package },
+          { to: "/settings", label: "Settings",      Icon: SettingsIcon },
+        ];
 
   return (
     <nav className="w-[220px] shrink-0 border-r border-border h-full flex flex-col bg-background">
       <div className="px-3 pt-4 pb-2">
         <div className="eyebrow px-2.5 pb-1.5">Workspace</div>
-        {ITEMS.map((item) => (
+        {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -47,7 +62,7 @@ export function Sidebar() {
                   <span>{item.label}</span>
                 </span>
                 <span className={cn("font-mono text-[10.5px]", isActive ? "text-primary" : "text-fg-faint")}>
-                  {item.label === "Library" ? skillCount : ""}
+                  {item.to === "/library" ? skillCount : ""}
                 </span>
               </>
             )}
