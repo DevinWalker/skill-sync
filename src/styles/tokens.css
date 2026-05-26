@@ -140,8 +140,15 @@ code, .mono, .font-mono {
 /* Hairline rule */
 .rule { border-color: var(--border); }
 
-/* Grid background — subtle, on <main> only via a utility class */
-.console-grid {
+/* Grid background — subtle, on <main> via a ::before pseudo so the mask
+   doesn't fade the page content along with it. */
+.console-grid { position: relative; isolation: isolate; }
+.console-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
   background-image:
     linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
@@ -149,7 +156,8 @@ code, .mono, .font-mono {
   -webkit-mask-image: radial-gradient(900px 500px at 40% 0%, black, transparent 75%);
           mask-image: radial-gradient(900px 500px at 40% 0%, black, transparent 75%);
 }
-:root:not(.dark) .console-grid {
+.console-grid > * { position: relative; z-index: 1; }
+:root:not(.dark) .console-grid::before {
   background-image:
     linear-gradient(rgba(0,0,0,0.020) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0,0,0,0.020) 1px, transparent 1px);
