@@ -6,6 +6,7 @@ import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { usePlanSync } from "@/hooks/use-sync";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
+import { NeedsAttentionCard } from "@/components/needs-attention-card";
 import { deriveOrphans } from "@/lib/orphans";
 import type { DriftStatus, SkillView, SyncPlan } from "@/types/bindings";
 
@@ -97,6 +98,7 @@ export function HomePage() {
         <Cell label={c.statusNeedsClaiming} value={`${counts.orphans} skills`} onClick={() => nav("/library?filter=orphan")} />
         <Cell label={c.statusUnknown} value={`${counts.unknown} skills`} onClick={() => nav("/library?filter=unknown")} />
       </div>
+      <NeedsAttentionCard orphans={orphans} />
       <SyncPreviewDialog plan={plan} open={!!plan} onOpenChange={(v) => !v && setPlan(null)} />
     </main>
   );
