@@ -4,9 +4,12 @@ import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { useUIState } from "@/store/ui-state";
+import { useMode } from "@/hooks/use-mode";
 import { OwnerBadge } from "./owner-badge";
 import { OwnershipPicker } from "./ownership-picker";
 import { DriftBar } from "./drift-bar";
+import { ToolIconRow } from "./tool-icon-row";
+import { friendlyTime } from "@/lib/time";
 import type { DriftStatus, OwnershipClass, SkillView } from "@/types/bindings";
 
 interface Props {
@@ -16,6 +19,40 @@ interface Props {
 
 function firstPath(skill: SkillView): string {
   return String(skill.locations[0]?.path ?? "—").replace(/^.*\/Users\/[^/]+/, "~");
+}
+
+function sumFileSize(_skill: SkillView): number {
+  // The current SkillView doesn't carry a size field. Estimate from location hash presence
+  // and file count proxy; replaced when bindings expose size. For now, return 0.
+  return 0;
+}
+
+function statusChip(
+  skill: SkillView,
+  drift: Partial<Record<string, DriftStatus>>,
+  enabledTargets: string[],
+) {
+  if (skill.class === "Unknown")
+    return (
+      <span className="text-[11px] text-[var(--warning)] border border-[var(--warning)] rounded px-1.5 py-0.5">
+        Unknown
+      </span>
+    );
+  const drifted = enabledTargets.filter((t) => {
+    const s = drift[t];
+    return (
+      s === "drifted-source-newer" ||
+      s === "drifted-target-newer" ||
+      s === "missing-in-target"
+    );
+  }).length;
+  if (drifted === 0)
+    return <span className="text-[11px] text-[var(--primary)]">In sync</span>;
+  return (
+    <span className="text-[11px] text-[var(--warning)]">
+      Out of sync · {drifted} {drifted === 1 ? "tool" : "tools"}
+    </span>
+  );
 }
 
 export function LibraryTable({
@@ -28,9 +65,15 @@ export function LibraryTable({
   const { data: settings } = useSettings();
   const selectSkill = useUIState((s) => s.selectSkill);
   const selectedSkill = useUIState((s) => s.selectedSkill);
+  const mode = useMode();
 
   const enabledTargets = useMemo(
     () => new Set(settings?.enabled_targets ?? []),
+    [settings?.enabled_targets]
+  );
+
+  const enabledTargetsArray = useMemo(
+    () => settings?.enabled_targets ?? [],
     [settings?.enabled_targets]
   );
 
@@ -65,17 +108,29 @@ export function LibraryTable({
     return <div className="px-8 py-12 font-mono text-xs text-destructive">{String(skills.error)}</div>;
   }
 
+  const isSimple = mode === "simple";
+
   return (
     <div className="px-8 pb-12">
       <div className="border border-border rounded-lg bg-card overflow-hidden">
-        <div className="grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
-          <div className="eyebrow">Skill</div>
-          <div className="eyebrow">Owner</div>
-          <div className="eyebrow">Targets</div>
-          <div className="eyebrow">Updated</div>
-          <div className="eyebrow text-right">Size</div>
-          <div className="eyebrow"></div>
-        </div>
+        {isSimple ? (
+          <div className="grid grid-cols-[1fr_180px_220px_120px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
+            <div className="eyebrow">Skill</div>
+            <div className="eyebrow">Status</div>
+            <div className="eyebrow">Where it lives</div>
+            <div className="eyebrow">Updated</div>
+            <div className="eyebrow"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
+            <div className="eyebrow">Skill</div>
+            <div className="eyebrow">Owner</div>
+            <div className="eyebrow">Targets</div>
+            <div className="eyebrow">Updated</div>
+            <div className="eyebrow text-right">Size</div>
+            <div className="eyebrow"></div>
+          </div>
+        )}
         <ul>
           {rows.map((s, i) => {
             const ownershipEntry = ownership?.skills?.[s.name];
@@ -91,7 +146,9 @@ export function LibraryTable({
                 currentOwnership={ownershipEntry?.class}
                 drift={driftRow}
                 enabled={enabledTargets}
+                enabledTargets={enabledTargetsArray}
                 isSelected={isSelected}
+                mode={mode}
                 onSelect={() => selectSkill(s.name)}
               />
             );
@@ -109,7 +166,9 @@ function SkillRow({
   currentOwnership,
   drift,
   enabled,
+  enabledTargets,
   isSelected,
+  mode,
   onSelect,
 }: {
   index: number;
@@ -118,12 +177,46 @@ function SkillRow({
   currentOwnership: OwnershipClass | undefined;
   drift: Partial<Record<string, DriftStatus>>;
   enabled: Set<string>;
+  enabledTargets: string[];
   isSelected: boolean;
+  mode: "simple" | "pro";
   onSelect: () => void;
 }) {
   const [classifyOpen, setClassifyOpen] = useState(false);
   const isUnknown = skill.class === "Unknown";
   const sizeKb = (sumFileSize(skill) / 1024).toFixed(1);
+
+  const actionCell = (
+    <div
+      data-open={classifyOpen}
+      className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 data-[open=true]:opacity-100 transition-opacity"
+    >
+      {isUnknown ? (
+        <button
+          className="font-mono text-[10.5px] px-2 py-1 rounded border border-primary bg-primary text-primary-foreground"
+          onClick={(e) => { e.stopPropagation(); setClassifyOpen((v) => !v); }}
+        >
+          {classifyOpen ? "close" : "classify"}
+        </button>
+      ) : (
+        <button
+          className="font-mono text-[10.5px] px-2 py-1 rounded border border-border bg-card text-muted-foreground"
+          onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        >
+          open
+        </button>
+      )}
+    </div>
+  );
+
+  const skillCell = (
+    <div className="min-w-0">
+      <div className="text-foreground font-medium text-sm truncate">{skill.name}</div>
+      <div className="font-mono text-[11px] text-fg-faint truncate">
+        {firstPath(skill)} · {skill.locations.length} location{skill.locations.length === 1 ? "" : "s"}
+      </div>
+    </div>
+  );
 
   return (
     <li
@@ -135,46 +228,45 @@ function SkillRow({
         tabIndex={0}
         onClick={onSelect}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect()}
-        className="grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
+        className={
+          mode === "simple"
+            ? "grid grid-cols-[1fr_180px_220px_120px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
+            : "grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
+        }
         style={isSelected ? { boxShadow: "inset 2px 0 0 var(--primary)" } : undefined}
       >
-        <div className="min-w-0">
-          <div className="text-foreground font-medium text-sm truncate">{skill.name}</div>
-          <div className="font-mono text-[11px] text-fg-faint truncate">
-            {firstPath(skill)} · {skill.locations.length} location{skill.locations.length === 1 ? "" : "s"}
-          </div>
-        </div>
-        <div>
-          <OwnerBadge klass={skill.class} confirmed={confirmed} />
-        </div>
-        <div>
-          <DriftBar
-            byTarget={drift as Partial<Record<"claude" | "codex" | "cursor" | "cowork", DriftStatus | undefined>>}
-            enabled={enabled}
-          />
-        </div>
-        <div className="font-mono text-[11.5px] text-muted-foreground">—</div>
-        <div className="font-mono text-[11.5px] text-fg-dim text-right">{sizeKb} kB</div>
-        <div
-          data-open={classifyOpen}
-          className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 data-[open=true]:opacity-100 transition-opacity"
-        >
-          {isUnknown ? (
-            <button
-              className="font-mono text-[10.5px] px-2 py-1 rounded border border-primary bg-primary text-primary-foreground"
-              onClick={(e) => { e.stopPropagation(); setClassifyOpen((v) => !v); }}
-            >
-              {classifyOpen ? "close" : "classify"}
-            </button>
-          ) : (
-            <button
-              className="font-mono text-[10.5px] px-2 py-1 rounded border border-border bg-card text-muted-foreground"
-              onClick={(e) => { e.stopPropagation(); onSelect(); }}
-            >
-              open
-            </button>
-          )}
-        </div>
+        {mode === "simple" ? (
+          <>
+            {skillCell}
+            <div>{statusChip(skill, drift, enabledTargets)}</div>
+            <div>
+              <ToolIconRow
+                tools={enabledTargets}
+                perTarget={drift as Record<string, DriftStatus | undefined>}
+              />
+            </div>
+            <div className="font-mono text-[11.5px] text-muted-foreground">
+              {friendlyTime(null)}
+            </div>
+            {actionCell}
+          </>
+        ) : (
+          <>
+            {skillCell}
+            <div>
+              <OwnerBadge klass={skill.class} confirmed={confirmed} />
+            </div>
+            <div>
+              <DriftBar
+                byTarget={drift as Partial<Record<"claude" | "codex" | "cursor" | "cowork", DriftStatus | undefined>>}
+                enabled={enabled}
+              />
+            </div>
+            <div className="font-mono text-[11.5px] text-muted-foreground">—</div>
+            <div className="font-mono text-[11.5px] text-fg-dim text-right">{sizeKb} kB</div>
+            {actionCell}
+          </>
+        )}
       </div>
       {classifyOpen && (
         <div className="px-3.5 pb-3">
@@ -187,10 +279,3 @@ function SkillRow({
     </li>
   );
 }
-
-function sumFileSize(_skill: SkillView): number {
-  // The current SkillView doesn't carry a size field. Estimate from location hash presence
-  // and file count proxy; replaced when bindings expose size. For now, return 0.
-  return 0;
-}
-
