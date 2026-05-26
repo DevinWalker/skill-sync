@@ -3,8 +3,12 @@ import { OrphanRow } from "./orphan-row";
 
 export function NeedsAttentionCard({
   orphans,
+  onClaim,
+  onRemove,
 }: {
   orphans: Orphan[];
+  onClaim: (o: Orphan) => void;
+  onRemove: (name: string, tool: string) => void;
 }) {
   if (orphans.length === 0) return null;
   const shown = orphans.slice(0, 5);
@@ -18,8 +22,8 @@ export function NeedsAttentionCard({
           <OrphanRow
             key={o.name}
             orphan={o}
-            onClaim={() => console.log("claim", o.name)}
-            onRemove={(t) => console.log("remove", o.name, "from", t)}
+            onClaim={() => onClaim(o)}
+            onRemove={(t) => onRemove(o.name, t)}
           />
         ))}
       </div>

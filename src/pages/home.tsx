@@ -4,11 +4,12 @@ import { useCopy } from "@/hooks/use-copy";
 import { useSkills } from "@/hooks/use-skills";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
-import { usePlanSync } from "@/hooks/use-sync";
+import { usePlanSync, usePullBack } from "@/hooks/use-sync";
 import { useAudit } from "@/hooks/use-audit";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
 import { NeedsAttentionCard } from "@/components/needs-attention-card";
 import { deriveOrphans } from "@/lib/orphans";
+import type { Orphan } from "@/lib/orphans";
 import { activitySentence } from "@/lib/activity-sentence";
 import type { DriftStatus, SkillView, SyncPlan } from "@/types/bindings";
 
@@ -55,6 +56,11 @@ export function HomePage() {
     return { ...c, orphans: orphans.length };
   }, [skills, drift, targets, orphans]);
   const planMut = usePlanSync();
+  const pullBack = usePullBack();
+  const claim = (o: Orphan) => pullBack.mutate({ skill: o.name, target: o.tools[0] });
+  const removeFromTarget = (name: string, tool: string) => {
+    alert(`Removing "${name}" from ${tool} isn't wired yet. Open the folder in Finder and delete it manually.`);
+  };
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const [, setNewSkillOpen] = useState(false);
 
@@ -126,7 +132,7 @@ export function HomePage() {
       {counts.outOfSync === 0 && counts.orphans === 0 && counts.unknown === 0 && skills.length > 0 ? (
         <p className="mt-6 font-mono text-[11px] text-[var(--fg-dim)]">{c.nothingToTend}</p>
       ) : (
-        <NeedsAttentionCard orphans={orphans} />
+        <NeedsAttentionCard orphans={orphans} onClaim={claim} onRemove={removeFromTarget} />
       )}
 
       <section className="mt-8">

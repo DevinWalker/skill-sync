@@ -10,11 +10,13 @@ import { useSkills } from "@/hooks/use-skills";
 import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
-import { usePlanSync } from "@/hooks/use-sync";
+import { usePlanSync, usePullBack } from "@/hooks/use-sync";
 import { useDriftRefresh } from "@/hooks/use-drift-refresh";
 import { useCopy } from "@/hooks/use-copy";
 import { useMode } from "@/hooks/use-mode";
 import { bucketArchivesByDay } from "@/lib/audit";
+import { deriveOrphans, type Orphan } from "@/lib/orphans";
+import { OrphanRow } from "@/components/orphan-row";
 import { ipc } from "@/lib/ipc";
 import type { AuditEntry, DriftStatus, SyncPlan } from "@/types/bindings";
 import { cn } from "@/lib/utils";
@@ -50,6 +52,15 @@ export function LibraryPage() {
 
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const planMut = usePlanSync();
+  const pullBack = usePullBack();
+  const orphans = useMemo(
+    () => deriveOrphans(skills.data ?? [], drift.data ?? {}),
+    [skills.data, drift.data]
+  );
+  const claim = (o: Orphan) => pullBack.mutate({ skill: o.name, target: o.tools[0] });
+  const removeFromTarget = (name: string, tool: string) => {
+    alert(`Removing "${name}" from ${tool} isn't wired yet. Open the folder in Finder and delete it manually.`);
+  };
   const [filter, setFilter] = useState("");
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>("all");
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -203,6 +214,24 @@ export function LibraryPage() {
           </div>
         </div>
       </div>
+
+      {mode === "simple" && orphans.length > 0 && (
+        <section className="px-8 mb-4">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+            <h2 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-dim)]">
+              {orphans.length} skill{orphans.length === 1 ? "" : "s"} in your tools isn't in your source
+            </h2>
+            {orphans.map((o) => (
+              <OrphanRow
+                key={o.name}
+                orphan={o}
+                onClaim={() => claim(o)}
+                onRemove={(t) => removeFromTarget(o.name, t)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <LibraryTable filter={filter} ownershipFilter={ownershipFilter} />
 
