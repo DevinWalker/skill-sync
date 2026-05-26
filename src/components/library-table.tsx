@@ -4,10 +4,7 @@ import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { useUIState } from "@/store/ui-state";
-import { useMode } from "@/hooks/use-mode";
-import { OwnerBadge } from "./owner-badge";
 import { OwnershipPicker } from "./ownership-picker";
-import { DriftBar } from "./drift-bar";
 import { ToolIconRow } from "./tool-icon-row";
 import { friendlyTime } from "@/lib/time";
 import type { DriftStatus, OwnershipClass, SkillView } from "@/types/bindings";
@@ -19,12 +16,6 @@ interface Props {
 
 function firstPath(skill: SkillView): string {
   return String(skill.locations[0]?.path ?? "—").replace(/^.*\/Users\/[^/]+/, "~");
-}
-
-function sumFileSize(_skill: SkillView): number {
-  // The current SkillView doesn't carry a size field. Estimate from location hash presence
-  // and file count proxy; replaced when bindings expose size. For now, return 0.
-  return 0;
 }
 
 function statusChip(
@@ -65,12 +56,6 @@ export function LibraryTable({
   const { data: settings } = useSettings();
   const selectSkill = useUIState((s) => s.selectSkill);
   const selectedSkill = useUIState((s) => s.selectedSkill);
-  const mode = useMode();
-
-  const enabledTargets = useMemo(
-    () => new Set(settings?.enabled_targets ?? []),
-    [settings?.enabled_targets]
-  );
 
   const enabledTargetsArray = useMemo(
     () => settings?.enabled_targets ?? [],
@@ -106,13 +91,8 @@ export function LibraryTable({
         case "orphan": return false; // orphans render in their own section (Task 4.5)
       }
     };
-    return all.filter(
-      (s) =>
-        matcher(s) &&
-        ownershipMatches(s) &&
-        (mode === "pro" || (s.class !== "Bundle" && s.class !== "ToolBuiltin")),
-    );
-  }, [skills.data, filter, ownershipFilter, ownership, mode]);
+    return all.filter((s) => matcher(s) && ownershipMatches(s));
+  }, [skills.data, filter, ownershipFilter, ownership]);
 
   if (skills.isLoading) {
     return <div className="px-8 py-12 eyebrow">Scanning…</div>;
@@ -121,33 +101,19 @@ export function LibraryTable({
     return <div className="px-8 py-12 font-mono text-xs text-destructive">{String(skills.error)}</div>;
   }
 
-  const isSimple = mode === "simple";
-
   return (
     <div className="px-8 pb-12">
       <div className="border border-border rounded-lg bg-card overflow-hidden">
-        {isSimple ? (
-          <div className="grid grid-cols-[1fr_180px_220px_120px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
-            <div className="eyebrow">Skill</div>
-            <div className="eyebrow">Status</div>
-            <div className="eyebrow">Where it lives</div>
-            <div className="eyebrow">Updated</div>
-            <div className="eyebrow"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
-            <div className="eyebrow">Skill</div>
-            <div className="eyebrow">Owner</div>
-            <div className="eyebrow">Targets</div>
-            <div className="eyebrow">Updated</div>
-            <div className="eyebrow text-right">Size</div>
-            <div className="eyebrow"></div>
-          </div>
-        )}
+        <div className="grid grid-cols-[1fr_180px_220px_120px_140px] gap-x-3 px-3.5 py-2.5 border-b border-border bg-card/30">
+          <div className="eyebrow">Skill</div>
+          <div className="eyebrow">Status</div>
+          <div className="eyebrow">Where it lives</div>
+          <div className="eyebrow">Updated</div>
+          <div className="eyebrow"></div>
+        </div>
         <ul>
           {rows.map((s, i) => {
             const ownershipEntry = ownership?.skills?.[s.name];
-            const confirmed = ownershipEntry?.class === "mine";
             const driftRow = (drift.data?.[s.name] ?? {}) as Partial<Record<string, DriftStatus>>;
             const isSelected = selectedSkill === s.name;
             return (
@@ -155,13 +121,10 @@ export function LibraryTable({
                 key={s.name}
                 index={i}
                 skill={s}
-                confirmed={confirmed}
                 currentOwnership={ownershipEntry?.class}
                 drift={driftRow}
-                enabled={enabledTargets}
                 enabledTargets={enabledTargetsArray}
                 isSelected={isSelected}
-                mode={mode}
                 onSelect={() => selectSkill(s.name)}
               />
             );
@@ -175,29 +138,22 @@ export function LibraryTable({
 function SkillRow({
   index,
   skill,
-  confirmed,
   currentOwnership,
   drift,
-  enabled,
   enabledTargets,
   isSelected,
-  mode,
   onSelect,
 }: {
   index: number;
   skill: SkillView;
-  confirmed: boolean;
   currentOwnership: OwnershipClass | undefined;
   drift: Partial<Record<string, DriftStatus>>;
-  enabled: Set<string>;
   enabledTargets: string[];
   isSelected: boolean;
-  mode: "simple" | "pro";
   onSelect: () => void;
 }) {
   const [classifyOpen, setClassifyOpen] = useState(false);
   const isUnknown = skill.class === "Unknown";
-  const sizeKb = (sumFileSize(skill) / 1024).toFixed(1);
 
   const actionCell = (
     <div
@@ -241,45 +197,21 @@ function SkillRow({
         tabIndex={0}
         onClick={onSelect}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect()}
-        className={
-          mode === "simple"
-            ? "grid grid-cols-[1fr_180px_220px_120px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
-            : "grid grid-cols-[1fr_140px_220px_120px_80px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
-        }
+        className="grid grid-cols-[1fr_180px_220px_120px_140px] gap-x-3 items-center px-3.5 py-3 cursor-pointer hover:bg-bg-hover focus:outline focus:outline-2 focus:outline-offset-[-2px] focus:outline-primary transition-colors group"
         style={isSelected ? { boxShadow: "inset 2px 0 0 var(--primary)" } : undefined}
       >
-        {mode === "simple" ? (
-          <>
-            {skillCell}
-            <div>{statusChip(skill, drift, enabledTargets)}</div>
-            <div>
-              <ToolIconRow
-                tools={enabledTargets}
-                perTarget={drift as Record<string, DriftStatus | undefined>}
-              />
-            </div>
-            <div className="font-mono text-[11.5px] text-muted-foreground">
-              {friendlyTime(null)}
-            </div>
-            {actionCell}
-          </>
-        ) : (
-          <>
-            {skillCell}
-            <div>
-              <OwnerBadge klass={skill.class} confirmed={confirmed} />
-            </div>
-            <div>
-              <DriftBar
-                byTarget={drift as Partial<Record<"claude" | "codex" | "cursor" | "cowork", DriftStatus | undefined>>}
-                enabled={enabled}
-              />
-            </div>
-            <div className="font-mono text-[11.5px] text-muted-foreground">—</div>
-            <div className="font-mono text-[11.5px] text-fg-dim text-right">{sizeKb} kB</div>
-            {actionCell}
-          </>
-        )}
+        {skillCell}
+        <div>{statusChip(skill, drift, enabledTargets)}</div>
+        <div>
+          <ToolIconRow
+            tools={enabledTargets}
+            perTarget={drift as Record<string, DriftStatus | undefined>}
+          />
+        </div>
+        <div className="font-mono text-[11.5px] text-muted-foreground">
+          {friendlyTime(null)}
+        </div>
+        {actionCell}
       </div>
       {classifyOpen && (
         <div className="px-3.5 pb-3">
