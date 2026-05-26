@@ -7,6 +7,7 @@ import type {
   DriftStatus,
   Settings,
   AuditEntry,
+  GitStatus,
 } from "@/types/bindings";
 
 export const ipc = {
@@ -27,6 +28,7 @@ export const ipc = {
   setSettings: (settings: Settings) =>
     invoke<void>("cmd_set_settings", { settings }),
   readAudit: (limit: number) => invoke<AuditEntry[]>("cmd_read_audit", { limit }),
+  gitStatus: (path: string) => invoke<GitStatus | null>("cmd_git_status", { path }),
   scaffoldSkill: (name: string, description: string) =>
     invoke<string>("cmd_scaffold_skill", { name, description }),
 };
