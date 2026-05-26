@@ -13,6 +13,16 @@ pub struct Settings {
     pub enabled_targets: Vec<String>,
     pub cowork_package_enabled: bool,
     pub theme: String,
+    #[serde(default = "default_mode")]
+    pub mode: String,
+    #[serde(default)]
+    pub first_run_completed: bool,
+    #[serde(default)]
+    pub mode_migration_announced: bool,
+}
+
+fn default_mode() -> String {
+    "pro".into() // Existing installs migrate to pro; new installs override to "simple" via first-run.
 }
 
 impl Settings {
@@ -26,6 +36,9 @@ impl Settings {
             enabled_targets: vec!["claude".into(), "codex".into(), "cursor".into()],
             cowork_package_enabled: true,
             theme: "system".into(),
+            mode: "simple".into(),
+            first_run_completed: false,
+            mode_migration_announced: false,
         }
     }
 }
