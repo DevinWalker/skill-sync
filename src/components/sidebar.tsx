@@ -5,6 +5,7 @@ import { useSkills } from "@/hooks/use-skills";
 import { useMode } from "@/hooks/use-mode";
 import { useCopy } from "@/hooks/use-copy";
 import { cn } from "@/lib/utils";
+import { GitStatusChip } from "./git-status-chip";
 
 const BUILD_SHA = import.meta.env.VITE_BUILD_SHA as string;
 
@@ -74,6 +75,9 @@ export function Sidebar() {
         <div className="eyebrow px-2.5 pb-1.5">Source</div>
         <div className="px-2.5 py-1 font-mono text-[11.5px] text-muted-foreground truncate" title={sourceRoot}>
           {sourceRoot.replace(/^.*\/Users\/[^/]+/, "~")}
+        </div>
+        <div className="px-2.5 mt-1.5">
+          <GitStatusChip />
         </div>
         <NavLink to="/settings" className="px-2.5 py-1 block font-mono text-[11px] text-fg-dim hover:text-foreground">
           + change source

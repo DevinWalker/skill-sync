@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Settings } from "@/types/bindings";
 import packageJson from "../../package.json";
 import { ModeSwitch } from "./mode-switch";
+import { GitStatusChip } from "./git-status-chip";
 
 const TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
@@ -71,6 +72,9 @@ export function SettingsForm() {
         </Row>
         <Row label="Show built-ins" hint="Display skills that come from anthropic-skills bundles.">
           <Toggle on={data.show_builtins} onClick={() => update({ show_builtins: !data.show_builtins })} disabled={busy} />
+        </Row>
+        <Row label="Branch / status" hint="Skill Sync only watches. Use your git client to commit and push.">
+          <GitStatusChip />
         </Row>
       </Section>
 
