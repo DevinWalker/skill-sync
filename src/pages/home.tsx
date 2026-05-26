@@ -6,6 +6,7 @@ import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { usePlanSync } from "@/hooks/use-sync";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
+import { deriveOrphans } from "@/lib/orphans";
 import type { DriftStatus, SkillView, SyncPlan } from "@/types/bindings";
 
 function classify(
@@ -43,7 +44,11 @@ export function HomePage() {
   const { data: drift = {} } = useDrift();
   const { data: settings } = useSettings();
   const targets = settings?.enabled_targets ?? [];
-  const counts = useMemo(() => classify(skills, drift, targets), [skills, drift, targets]);
+  const orphans = useMemo(() => deriveOrphans(skills, drift), [skills, drift]);
+  const counts = useMemo(() => {
+    const c = classify(skills, drift, targets);
+    return { ...c, orphans: orphans.length };
+  }, [skills, drift, targets, orphans]);
   const planMut = usePlanSync();
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const [, setNewSkillOpen] = useState(false);
