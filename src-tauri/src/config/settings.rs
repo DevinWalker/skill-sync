@@ -42,3 +42,34 @@ impl Settings {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserializing_legacy_settings_fills_mode_with_pro() {
+        let legacy_json = r#"{
+            "version": 1,
+            "source_root": "/tmp/x",
+            "package_output_dir": "/tmp/y",
+            "show_builtins": false,
+            "external_bundle_roots": [],
+            "enabled_targets": ["claude"],
+            "cowork_package_enabled": true,
+            "theme": "dark"
+        }"#;
+        let settings: Settings = serde_json::from_str(legacy_json).unwrap();
+        assert_eq!(settings.mode, "pro");
+        assert!(!settings.first_run_completed);
+        assert!(!settings.mode_migration_announced);
+    }
+
+    #[test]
+    fn fresh_defaults_use_simple_mode() {
+        let home = std::path::Path::new("/tmp/home");
+        let s = Settings::defaults(home);
+        assert_eq!(s.mode, "simple");
+        assert!(!s.first_run_completed);
+    }
+}
