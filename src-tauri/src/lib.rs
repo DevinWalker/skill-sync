@@ -18,6 +18,7 @@ use ipc::commands::{
     cmd_list_skills, cmd_plan_sync, cmd_pull_back, cmd_read_audit, cmd_set_ownership,
     cmd_set_settings, cmd_test_target_write,
 };
+use ipc::skills_scaffold::cmd_scaffold_skill;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -46,6 +47,7 @@ pub fn run() {
             cmd_get_settings,
             cmd_set_settings,
             cmd_read_audit,
+            cmd_scaffold_skill,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
