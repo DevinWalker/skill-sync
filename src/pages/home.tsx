@@ -5,9 +5,11 @@ import { useSkills } from "@/hooks/use-skills";
 import { useDrift } from "@/hooks/use-drift";
 import { useSettings } from "@/hooks/use-settings";
 import { usePlanSync } from "@/hooks/use-sync";
+import { useAudit } from "@/hooks/use-audit";
 import { SyncPreviewDialog } from "@/components/sync-preview-dialog";
 import { NeedsAttentionCard } from "@/components/needs-attention-card";
 import { deriveOrphans } from "@/lib/orphans";
+import { activitySentence } from "@/lib/activity-sentence";
 import type { DriftStatus, SkillView, SyncPlan } from "@/types/bindings";
 
 function classify(
@@ -46,6 +48,8 @@ export function HomePage() {
   const { data: settings } = useSettings();
   const targets = settings?.enabled_targets ?? [];
   const orphans = useMemo(() => deriveOrphans(skills, drift), [skills, drift]);
+  const { data: audit = [] } = useAudit(50);
+  const recent = audit.slice(0, 3);
   const counts = useMemo(() => {
     const c = classify(skills, drift, targets);
     return { ...c, orphans: orphans.length };
@@ -99,6 +103,28 @@ export function HomePage() {
         <Cell label={c.statusUnknown} value={`${counts.unknown} skills`} onClick={() => nav("/library?filter=unknown")} />
       </div>
       <NeedsAttentionCard orphans={orphans} />
+
+      <section className="mt-8">
+        <h2 className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--fg-dim)]">
+          Recent activity
+        </h2>
+        <ul className="space-y-1.5 text-[13.5px]">
+          {recent.map((e, i) => (
+            <li key={i} className="text-[var(--muted-foreground)]">
+              <span className="font-mono text-[var(--fg-dim)]">
+                {new Date(e.ts).toLocaleTimeString()} ·
+              </span>{" "}
+              {activitySentence(e)}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-[11px]">
+          <a href="/activity" className="text-[var(--primary)] underline">
+            view full history →
+          </a>
+        </p>
+      </section>
+
       <SyncPreviewDialog plan={plan} open={!!plan} onOpenChange={(v) => !v && setPlan(null)} />
     </main>
   );
