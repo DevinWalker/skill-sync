@@ -5,6 +5,7 @@ use crate::{
     paths::Paths,
     provenance::{classify, Class, Provenance},
 };
+use chrono::SecondsFormat;
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -17,6 +18,7 @@ pub struct LocationView {
     pub real_path: PathBuf,
     pub is_symlink: bool,
     pub hash: String,
+    pub modified_at: String,
     pub provenance: Provenance,
 }
 
@@ -59,11 +61,19 @@ pub fn list_skills(paths: &Paths, known_bundles: &[String]) -> std::io::Result<V
             };
             let prov = classify(&loc, paths, known_bundles, &[]);
             let hash = content_hash(&loc.real_path).unwrap_or_default();
+            let modified_at = std::fs::metadata(loc.real_path.join("SKILL.md"))
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .and_then(|d| chrono::DateTime::<chrono::Utc>::from_timestamp(d.as_secs() as i64, 0))
+                .map(|dt| dt.to_rfc3339_opts(SecondsFormat::Secs, true))
+                .unwrap_or_default();
             let lv = LocationView {
                 path: loc.path.clone(),
                 real_path: loc.real_path.clone(),
                 is_symlink: loc.is_symlink,
                 hash,
+                modified_at,
                 provenance: prov.clone(),
             };
             let entry = grouped.entry(fm.name.clone()).or_insert(SkillView {
