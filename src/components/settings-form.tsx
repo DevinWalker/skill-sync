@@ -5,6 +5,7 @@ import { applyTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { Settings } from "@/types/bindings";
 import packageJson from "../../package.json";
+import { ModeSwitch } from "./mode-switch";
 
 const TARGETS = ["claude", "codex", "cursor", "cowork"] as const;
 
@@ -51,6 +52,10 @@ export function SettingsForm() {
 
   return (
     <div className="px-8 pb-12 max-w-3xl">
+      <Section title="Mode">
+        <ModeSwitch />
+      </Section>
+
       <Section title="Source">
         <Row label="Source root" hint="Where you author skills. Used as the source of truth for syncs.">
           <input
