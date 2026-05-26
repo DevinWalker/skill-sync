@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { OwnerBadge } from "./owner-badge";
 import { DriftBadge } from "./drift-badge";
@@ -9,8 +9,10 @@ import { useOwnership } from "@/hooks/use-ownership";
 import { useDrift } from "@/hooks/use-drift";
 import { usePullBack } from "@/hooks/use-sync";
 import { useMode } from "@/hooks/use-mode";
+import { useSettings } from "@/hooks/use-settings";
+import { locationsByTarget } from "@/lib/target-locations";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import type { DriftStatus, LocationView } from "@/types/bindings";
+import type { DriftStatus } from "@/types/bindings";
 
 const PRETTY_TARGET: Record<string, string> = {
   claude: "Claude Code",
@@ -36,13 +38,18 @@ export function SkillDetailDrawer() {
   const drift = useDrift();
   const pullBack = usePullBack();
   const mode = useMode();
+  const { data: settings } = useSettings();
   const [compareTarget, setCompareTarget] = useState<string | null>(null);
   const skill = skills.data?.find((s) => s.name === selected) ?? null;
+  const { source: sourceLoc, byTarget } = useMemo(
+    () => skill ? locationsByTarget(skill, settings?.source_root ?? "") : { source: undefined, byTarget: {} },
+    [skill, settings?.source_root],
+  );
   if (!skill) return <Sheet open={false} onOpenChange={(v) => !v && close(null)}><SheetContent side="right" /></Sheet>;
 
   const confirmed = ownership.data?.skills?.[skill.name]?.class === "mine";
   const driftRow = (drift.data?.[skill.name] ?? {}) as Partial<Record<string, DriftStatus>>;
-  const primaryLoc: LocationView | undefined = skill.locations[0];
+  const primaryLoc = sourceLoc;
 
   return (
     <Sheet open={!!selected} onOpenChange={(v) => !v && close(null)}>
@@ -130,10 +137,10 @@ export function SkillDetailDrawer() {
             onClose={() => setCompareTarget(null)}
             skillName={skill.name}
             tool={compareTarget}
-            yourPath={primaryLoc?.path ?? ""}
-            yourUpdated={primaryLoc?.path ?? ""}
-            theirPath={primaryLoc?.path ?? ""}
-            theirUpdated={primaryLoc?.path ?? ""}
+            yourPath={String(sourceLoc?.path ?? "")}
+            yourUpdated={sourceLoc?.modified_at ?? ""}
+            theirPath={String(byTarget[compareTarget]?.path ?? "")}
+            theirUpdated={byTarget[compareTarget]?.modified_at ?? ""}
           />
         )}
       </SheetContent>
