@@ -5,10 +5,7 @@ const dot = (
   <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
 );
 
-export function OwnerBadge({ klass, confirmed, mode }: { klass: Class; confirmed?: boolean; mode?: "simple" | "pro" }) {
-  if (mode === "simple") {
-    if (klass === "Bundle" || klass === "ToolBuiltin") return null;
-  }
+export function OwnerBadge({ klass, confirmed }: { klass: Class; confirmed?: boolean }) {
   if (confirmed && klass === "MineHeuristic") {
     return <Badge variant="primary">{dot}Mine</Badge>;
   }
